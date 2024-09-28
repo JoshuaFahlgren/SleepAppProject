@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, TouchableOpacity, Alert, StatusBar } from 'react-native';
 
@@ -53,10 +54,8 @@ const Login = () => {
 
   return (
     <View style={styles.container}>
-      {/* Title */}
       <Text style={styles.title}>Login</Text>
-      
-      {/* Role Selection */}
+
       <View style={styles.roleContainer}>
         <TouchableOpacity
           style={[styles.button, userRole === 'parent' && styles.selectedButton]}
@@ -73,7 +72,6 @@ const Login = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Input fields based on selected role */}
       {userRole === 'parent' && (
         <>
           <TextInput
@@ -94,7 +92,6 @@ const Login = () => {
             placeholderTextColor="#36454F"
           />
           
-          {/* Login Button */}
           {!isCodeSent && (
             <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
               <Text style={styles.buttonText}>Login</Text>
@@ -114,7 +111,6 @@ const Login = () => {
             placeholderTextColor="#36454F"
           />
           
-          {/* Login Button */}
           {!isCodeSent && (
             <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
               <Text style={styles.buttonText}>Login</Text>
@@ -123,7 +119,6 @@ const Login = () => {
         </>
       )}
 
-      {/* Show SMS verification input when code is sent */}
       {isCodeSent && !isApproved && (
         <>
           <TextInput
@@ -140,7 +135,6 @@ const Login = () => {
         </>
       )}
 
-      {/* Dynamic Description Box */}
       {userRole && (
         <View style={styles.descriptionBox}>
           <Text style={styles.descriptionText}>{getDescription()}</Text>
@@ -155,73 +149,71 @@ const Login = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F0FFF0', // Light mint green background
+    backgroundColor: '#F4F7F8',  // Light gray background from App.js
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
   },
   title: {
-    color: '#36454F', // Dark slate gray for the title
-    fontSize: 36, // Slightly reduced font size for better balance
-    fontWeight: 'bold', // Bold for title emphasis
+    color: '#800080',  // Purple color for the title from App.js
+    fontSize: 36,
+    fontWeight: '600',
     textAlign: 'center',
-    marginBottom: 30, // Increased margin for spacing
-    textShadowColor: '#FFF', // Shadow effect
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
+    marginBottom: 10,
+    letterSpacing: 1,
   },
   input: {
-    height: 50, // Slightly taller for easier input
+    height: 50,
     borderColor: '#36454F',
     borderWidth: 2,
-    borderRadius: 8, // Increased border-radius for rounded corners
-    paddingHorizontal: 15, // Increased padding
+    borderRadius: 8,
+    paddingHorizontal: 15,
     marginBottom: 20,
     width: '100%',
     color: '#36454F',
-    fontSize: 16, // Larger font size for input text
+    fontSize: 16,
   },
   roleContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginBottom: 30, // Increased space before inputs
+    justifyContent: 'space-between',
+    width: '90%',
+    marginBottom: 30,
   },
   button: {
-    backgroundColor: '#36454F', // Charcoal color for buttons
+    backgroundColor: '#800080',  // Purple buttons from App.js
     paddingVertical: 12,
-    paddingHorizontal: 30, // Wider padding
-    borderRadius: 25, // Pill-shaped buttons
+    paddingHorizontal: 30,
+    borderRadius: 30,  // Pill-shaped buttons from App.js
     alignItems: 'center',
-    width: '40%', // Adjusted width for a better fit
+    width: '40%',
   },
   loginButton: {
-    backgroundColor: '#36454F', // Same color as other buttons
-    paddingVertical: 15,
-    paddingHorizontal: 40, // Wider padding for login button
-    borderRadius: 25, // Pill-shaped login button
-    alignItems: 'center',
-    marginTop: 20, // Margin above login button
-  },
-  verifyButton: {
-    backgroundColor: '#28353B', // Slightly different color for verify button
+    backgroundColor: '#800080',  // Same button style as App.js
     paddingVertical: 15,
     paddingHorizontal: 40,
-    borderRadius: 25, // Pill-shaped verify button
+    borderRadius: 30,  // Pill-shaped login button from App.js
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  verifyButton: {
+    backgroundColor: '#28353B',  // Slightly different color for verify button
+    paddingVertical: 15,
+    paddingHorizontal: 40,
+    borderRadius: 30,  // Pill-shaped verify button
     alignItems: 'center',
     marginTop: 20,
   },
   buttonText: {
-    color: '#FFF', // White text on the button
+    color: '#FFF',
     fontSize: 18,
-    fontWeight: '600', // Slightly bolder text
+    fontWeight: '500',
   },
   selectedButton: {
-    backgroundColor: '#28353B', // Darker shade for selected role button
+    backgroundColor: '#28353B',  // Darker shade for selected role button
   },
   descriptionBox: {
     marginTop: 20,
-    backgroundColor: '#E8F6F3', // Light background for the description box
+    backgroundColor: '#E8F6F3',
     padding: 15,
     borderRadius: 10,
     width: '100%',

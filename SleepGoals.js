@@ -115,17 +115,18 @@ const SleepGoals = () => {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#F0FFF0',
+    backgroundColor: '#F4F7F8', // Light gray background from App.js
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
   },
   title: {
-    color: '#36454F',
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 30,
+    color: '#800080', // Purple color for the title from App.js
+    fontSize: 36, // Consistent font size with App.js
+    fontWeight: '600', // Consistent weight with App.js
     textAlign: 'center',
+    marginBottom: 10,
+    letterSpacing: 1,
   },
   bubbleContainer: {
     flexDirection: 'row',
@@ -148,17 +149,17 @@ const styles = StyleSheet.create({
     color: '#36454F',
   },
   saveButton: {
-    backgroundColor: '#36454F',
+    backgroundColor: '#800080', // Same button color as App.js
     paddingVertical: 15,
     paddingHorizontal: 40,
-    borderRadius: 8,
+    borderRadius: 30, // Pill-shaped button style from App.js
     marginTop: 30,
     marginBottom: 40,
   },
   saveButtonText: {
     color: '#FFF',
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '500',
   },
 });
 

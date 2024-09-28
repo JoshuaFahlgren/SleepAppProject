@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, TouchableOpacity, Alert, Modal, ScrollView } from 'react-native';
 import CheckBox from 'expo-checkbox'; // Import expo-checkbox
@@ -12,7 +13,6 @@ const SignUp = ({ navigation }) => {
   const [termsRead, setTermsRead] = useState(false); // State to track if terms were read
 
   const handleSignUp = () => {
-    // Validate inputs
     if (!email || !phoneNumber || !password || !confirmPassword) {
       Alert.alert("All fields are required.");
       return;
@@ -30,11 +30,10 @@ const SignUp = ({ navigation }) => {
 
     Alert.alert("Sign Up Successful!");
     navigation.navigate('SleepGoals');
-    // Add your sign-up logic here
   };
 
   const openTerms = () => {
-    setModalVisible(true); // Open the modal for Terms and Conditions
+    setModalVisible(true);
   };
 
   const closeTerms = () => {
@@ -44,10 +43,8 @@ const SignUp = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      {/* Title */}
       <Text style={styles.title}>Sign Up</Text>
-      
-      {/* Parent Email */}
+
       <TextInput
         style={styles.input}
         placeholder="Parent Email"
@@ -57,8 +54,7 @@ const SignUp = ({ navigation }) => {
         autoCapitalize="none"
         placeholderTextColor="#36454F"
       />
-      
-      {/* Phone Number */}
+
       <TextInput
         style={styles.input}
         placeholder="Phone Number"
@@ -68,7 +64,6 @@ const SignUp = ({ navigation }) => {
         placeholderTextColor="#36454F"
       />
 
-      {/* Password */}
       <TextInput
         style={styles.input}
         placeholder="Password"
@@ -78,7 +73,6 @@ const SignUp = ({ navigation }) => {
         placeholderTextColor="#36454F"
       />
 
-      {/* Confirm Password */}
       <TextInput
         style={styles.input}
         placeholder="Confirm Password"
@@ -88,7 +82,6 @@ const SignUp = ({ navigation }) => {
         placeholderTextColor="#36454F"
       />
 
-      {/* Terms and Conditions */}
       <View style={styles.termsContainer}>
         <TouchableOpacity onPress={openTerms}>
           <Text style={styles.termsText}>Read Terms and Conditions</Text>
@@ -97,22 +90,18 @@ const SignUp = ({ navigation }) => {
           <CheckBox
             value={isChecked}
             onValueChange={setIsChecked}
-            disabled={!termsRead} // Disable until the terms are read
+            disabled={!termsRead}
             style={styles.checkbox}
-            color={isChecked ? '#36454F' : undefined} // Change color when checked
+            color={isChecked ? '#36454F' : undefined}
           />
-          <Text style={styles.checkboxLabel}>
-            I agree to the Terms and Conditions
-          </Text>
+          <Text style={styles.checkboxLabel}>I agree to the Terms and Conditions</Text>
         </View>
       </View>
 
-      {/* Sign Up Button */}
       <TouchableOpacity style={styles.signUpButton} onPress={handleSignUp}>
         <Text style={styles.buttonText}>Sign Up</Text>
       </TouchableOpacity>
 
-      {/* Modal to Display Terms and Conditions */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -166,7 +155,7 @@ const SignUp = ({ navigation }) => {
                 • We reserve the right to terminate or suspend your access to the App at any time, without prior notice, for conduct that we believe violates these Terms or is harmful to other users of the App, us, or third parties, or for any other reason.{"\n"}
                 {"\n"}
                 10. Governing Law{"\n"}
-                • These Terms are governed by and construed in accordance with the laws of the State of Alabama{"\n"}
+                • These Terms are governed by and construed in accordance with the laws of the State of Alabama.{"\n"}
                 • Any disputes arising under or in connection with these Terms shall be resolved in the courts of the State of Alabama.{"\n"}
                 {"\n"}
                 11. Changes to These Terms{"\n"}
@@ -177,11 +166,7 @@ const SignUp = ({ navigation }) => {
                 • If you have any questions or concerns about these Terms, please contact us at [Contact Information].{"\n"}
               </Text>
             </ScrollView>
-
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={closeTerms}
-            >
+            <TouchableOpacity style={styles.closeButton} onPress={closeTerms}>
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
           </View>
@@ -194,30 +179,29 @@ const SignUp = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F0FFF0', // Light mint green background
+    backgroundColor: '#F4F7F8', // Light gray background from App.js
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
   },
   title: {
-    color: '#36454F', // Dark slate gray for the title
-    fontSize: 36, // Font size for the title
-    fontWeight: 'bold', // Bold for title emphasis
+    color: '#800080', // Purple color for the title from App.js
+    fontSize: 36,
+    fontWeight: '600',
     textAlign: 'center',
-    marginBottom: 30, // Space below title
-    textShadowColor: '#FFF', // Shadow effect
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 3,
+    marginBottom: 10,
+    marginTop:40,
+    letterSpacing: 1,
   },
   input: {
     height: 50,
-    borderColor: '#36454F', // Dark slate gray for input border
+    borderColor: '#36454F',
     borderWidth: 2,
     borderRadius: 8,
     paddingHorizontal: 15,
     marginBottom: 20,
     width: '100%',
-    color: '#36454F', // Text color in input
+    color: '#36454F',
     fontSize: 16,
   },
   termsContainer: {
@@ -225,8 +209,8 @@ const styles = StyleSheet.create({
   },
   termsText: {
     fontSize: 16,
-    color: '#1E90FF', // Blue for clickable link
-    textDecorationLine: 'underline', // Underline the link
+    color: '#1E90FF',
+    textDecorationLine: 'underline',
     textAlign: 'center',
   },
   checkboxContainer: {
@@ -242,17 +226,17 @@ const styles = StyleSheet.create({
     color: '#36454F',
   },
   signUpButton: {
-    backgroundColor: '#36454F', // Charcoal color for the button
+    backgroundColor: '#800080', // Purple button color from App.js
     paddingVertical: 15,
-    paddingHorizontal: 40, // Button padding
-    borderRadius: 25, // Pill-shaped sign-up button
+    paddingHorizontal: 40,
+    borderRadius: 30, // Pill-shaped sign-up button
     alignItems: 'center',
     marginTop: 20,
   },
   buttonText: {
-    color: '#FFF', // White text on the button
+    color: '#FFF',
     fontSize: 18,
-    fontWeight: '600', // Bold text
+    fontWeight: '500',
   },
   modalContainer: {
     flex: 1,
@@ -269,9 +253,9 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 25,
     fontWeight: 'bold',
-    marginTop: 50,
-    textAlign:'center',
     marginBottom: 20,
+    marginTop: 50,
+    textAlign: 'center',
   },
   modalText: {
     fontSize: 16,
@@ -279,7 +263,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   closeButton: {
-    backgroundColor: '#36454F',
+    backgroundColor: '#800080', // Same button color as App.js
     padding: 15,
     alignItems: 'center',
     marginTop: 20,
