@@ -1,17 +1,52 @@
 import 'react-native-gesture-handler';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, TouchableOpacity, Alert, StatusBar } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
 
-const Login = () => {
+const Login = ({ navigation }) => {  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [smsCode, setSmsCode] = useState(''); 
-  const [username, setUsername] = useState(''); // Username for child login
-  const [isCodeSent, setIsCodeSent] = useState(false); // State to track if code was sent
-  const [userRole, setUserRole] = useState(null); // State for user role
-  const [isApproved, setIsApproved] = useState(false); // State for approval (after SMS verification)
+  const [username, setUsername] = useState(''); // Used for child login to store parent email
+  const [isCodeSent, setIsCodeSent] = useState(false); 
+  const [userRole, setUserRole] = useState(null); 
+  const [isApproved, setIsApproved] = useState(false); 
 
-  const handleLogin = () => {
+  // Function to check credentials for parent login
+  const checkParentCredentials = async () => {
+    try {
+      const storedUser = await AsyncStorage.getItem('user');
+      const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+
+      if (parsedUser && parsedUser.email === email && parsedUser.password === password) {
+        return true; 
+      } else {
+        return false;
+      }
+    } catch (error) {
+      console.error("Error retrieving user data from storage:", error);
+      return false;
+    }
+  };
+
+  // Function to verify if the parent email exists for child login
+  const verifyParentEmailForChild = async () => {
+    try {
+      const storedUser = await AsyncStorage.getItem('user');
+      const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+
+      if (parsedUser && parsedUser.email === username) {
+        return true; // Parent email exists
+      } else {
+        return false; // Parent email does not exist
+      }
+    } catch (error) {
+      console.error("Error retrieving user data from storage:", error);
+      return false;
+    }
+  };
+
+  const handleLogin = async () => {
     if (!userRole) {
       Alert.alert("Please select whether you are a parent or a child.");
       return;
@@ -19,29 +54,46 @@ const Login = () => {
 
     if (userRole === 'parent') {
       if (email && password) {
-        Alert.alert("SMS code sent to your phone.");
-        setIsCodeSent(true);
+        const isValid = await checkParentCredentials();
+        if (isValid) {
+          Alert.alert("SMS code sent to your phone.");
+          setIsCodeSent(true);
+        } else {
+          Alert.alert("Invalid email or password.");
+        }
       } else {
         Alert.alert("Please enter email and password.");
       }
     } else if (userRole === 'child') {
       if (username) {
-        Alert.alert("SMS code sent to parent's phone for approval.");
-        setIsCodeSent(true);
+        const isParentEmailValid = await verifyParentEmailForChild();
+        if (isParentEmailValid) {
+          Alert.alert("SMS code sent to parent's phone for approval.");
+          setIsCodeSent(true);
+        } else {
+          Alert.alert("Invalid parent email. Please try again.");
+        }
       } else {
         Alert.alert("Please enter parent email.");
       }
     }
   };
 
-  const verifyCode = () => {
-    if (smsCode === '1234') { // For demo purposes, assume code is 1234
+  const verifyCode = async () => {
+    if (smsCode === '1234') { 
       setIsApproved(true);
       Alert.alert("SMS verification successful! You are logged in.");
+  
+      // Example sleepData logic
+      const sleepData = { totalHours: 7 }; // Replace with actual sleep data logic
+  
+      // Navigate to WelcomeScreen and pass sleepData as a prop
+      navigation.navigate('GameWelcomeScreen', { sleepData });
     } else {
       Alert.alert("Invalid code. Please try again.");
     }
   };
+  
 
   const getDescription = () => {
     if (userRole === 'parent') {
@@ -49,11 +101,19 @@ const Login = () => {
     } else if (userRole === 'child') {
       return 'Your child can learn the benefits of consistent sleep through our interactive game. Enter your parent email to send a code for approval. You will need the SMS code to complete the login process.';
     }
-    return ''; // No description when no role is selected
+    return '';
   };
 
   return (
     <View style={styles.container}>
+      {/* Back Button */}
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Text style={styles.backButtonText}>
+          ← Back
+        </Text>
+      </TouchableOpacity>
+
+      {/* Title */}
       <Text style={styles.title}>Login</Text>
 
       <View style={styles.roleContainer}>
@@ -153,6 +213,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    position: 'relative',  // Ensures back button is positioned properly
   },
   title: {
     color: '#800080',  // Purple color for the title from App.js
@@ -223,6 +284,23 @@ const styles = StyleSheet.create({
     color: '#36454F',
     fontSize: 16,
     textAlign: 'center',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 20,  // Adjust as needed for spacing
+    left: 20,
+    padding: 10,
+    backgroundColor: '#F4F7F8',  // Same background color
+    borderColor: '#800080',
+    borderWidth: 2,
+    borderRadius: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButtonText: {
+    color: '#800080',  // Purple color for back button text
+    fontSize: 18,
+    fontWeight: '500',
   },
 });
 

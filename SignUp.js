@@ -1,7 +1,8 @@
 import 'react-native-gesture-handler';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, TouchableOpacity, Alert, Modal, ScrollView } from 'react-native';
-import CheckBox from 'expo-checkbox'; // Import expo-checkbox
+import CheckBox from 'expo-checkbox';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
 
 const SignUp = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -12,9 +13,20 @@ const SignUp = ({ navigation }) => {
   const [modalVisible, setModalVisible] = useState(false); // Modal visibility state
   const [termsRead, setTermsRead] = useState(false); // State to track if terms were read
 
-  const handleSignUp = () => {
+  const validateEmail = (email) => {
+    // Ensure email contains '@' and '.com'
+    return email.includes('@') && (email.includes('.com')||email.includes('.edu'));
+  };
+
+  const handleSignUp = async () => {
     if (!email || !phoneNumber || !password || !confirmPassword) {
       Alert.alert("All fields are required.");
+      return;
+    }
+
+    // Validate email format
+    if (!validateEmail(email)) {
+      Alert.alert("Please enter a valid email address.");
       return;
     }
 
@@ -28,8 +40,20 @@ const SignUp = ({ navigation }) => {
       return;
     }
 
-    Alert.alert("Sign Up Successful!");
-    navigation.navigate('SleepGoals');
+    try {
+      // Store user data in AsyncStorage after sign-up
+      const userData = {
+        email,
+        phoneNumber,
+        password, // In a real app, passwords should be encrypted.
+      };
+      await AsyncStorage.setItem('user', JSON.stringify(userData));
+
+      Alert.alert("Sign Up Successful!");
+      navigation.navigate('SleepGoals');
+    } catch (err) {
+      Alert.alert("Error storing user data: ", err.message);
+    }
   };
 
   const openTerms = () => {
@@ -43,6 +67,11 @@ const SignUp = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      {/* Back Button */}
+      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <Text style={styles.backButtonText}>← Back</Text>
+      </TouchableOpacity>
+
       <Text style={styles.title}>Sign Up</Text>
 
       <TextInput
@@ -113,7 +142,7 @@ const SignUp = ({ navigation }) => {
             <ScrollView>
               <Text style={styles.modalTitle}>Terms and Conditions</Text>
               <Text style={styles.modalText}>
-                Last Updated: 8/27/2024 {"\n"}
+              Last Updated: 8/27/2024 {"\n"}
                 {"\n"}
                 1. Introduction{"\n"}
                 Welcome to Sleep Sync (the "App"). The App is designed to help parents and children aged 6-12 track and improve their sleep patterns. By using the App, you agree to comply with and be bound by these Terms and Conditions (the "Terms"). Please read them carefully before using the App.{"\n"}
@@ -179,18 +208,18 @@ const SignUp = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F7F8', // Light gray background from App.js
+    backgroundColor: '#F4F7F8',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
   },
   title: {
-    color: '#800080', // Purple color for the title from App.js
+    color: '#800080',
     fontSize: 36,
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: 10,
-    marginTop:40,
+    marginTop: 40,
     letterSpacing: 1,
   },
   input: {
@@ -226,10 +255,10 @@ const styles = StyleSheet.create({
     color: '#36454F',
   },
   signUpButton: {
-    backgroundColor: '#800080', // Purple button color from App.js
+    backgroundColor: '#800080',
     paddingVertical: 15,
     paddingHorizontal: 40,
-    borderRadius: 30, // Pill-shaped sign-up button
+    borderRadius: 30,
     alignItems: 'center',
     marginTop: 20,
   },
@@ -241,7 +270,7 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
     backgroundColor: '#fff',
@@ -263,7 +292,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   closeButton: {
-    backgroundColor: '#800080', // Same button color as App.js
+    backgroundColor: '#800080',
     padding: 15,
     alignItems: 'center',
     marginTop: 20,
@@ -273,6 +302,23 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 18,
     fontWeight: '600',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    padding: 10,
+    backgroundColor: '#F4F7F8',
+    borderColor: '#800080',
+    borderWidth: 2,
+    borderRadius: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButtonText: {
+    color: '#800080',
+    fontSize: 18,
+    fontWeight: '500',
   },
 });
 
