@@ -9,6 +9,7 @@ import SleepGoals from './SleepGoals';  // Correct path to SleepGoals component
 import SheepJumpGame from './SheepJumpGame';
 import GameWelcomeScreen from './GameWelcomeScreen';
 import Herdle from './Herdle';
+import ParentWelcomePage from './ParentWelcomePage';
 
 const Stack = createNativeStackNavigator();
 
@@ -23,6 +24,7 @@ export default function App() {
         <Stack.Screen name="SheepJumpGame" component={SheepJumpGame} />
         <Stack.Screen name="GameWelcomeScreen" component={GameWelcomeScreen} />
         <Stack.Screen name="Herdle" component={Herdle} />
+        <Stack.Screen name="ParentWelcomePage" component={ParentWelcomePage} />
       </Stack.Navigator>
     </NavigationContainer>
   );

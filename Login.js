@@ -1,16 +1,16 @@
 import 'react-native-gesture-handler';
 import React, { useState } from 'react';
-import { StyleSheet, Text, TextInput, View, TouchableOpacity, Alert, StatusBar } from 'react-native';
+import { StyleSheet, Text, TextInput, View, TouchableOpacity, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
 
-const Login = ({ navigation }) => {  
+const Login = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [smsCode, setSmsCode] = useState(''); 
+  const [smsCode, setSmsCode] = useState('');
   const [username, setUsername] = useState(''); // Used for child login to store parent email
-  const [isCodeSent, setIsCodeSent] = useState(false); 
-  const [userRole, setUserRole] = useState(null); 
-  const [isApproved, setIsApproved] = useState(false); 
+  const [isCodeSent, setIsCodeSent] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+  const [isApproved, setIsApproved] = useState(false);
 
   // Function to check credentials for parent login
   const checkParentCredentials = async () => {
@@ -19,7 +19,7 @@ const Login = ({ navigation }) => {
       const parsedUser = storedUser ? JSON.parse(storedUser) : null;
 
       if (parsedUser && parsedUser.email === email && parsedUser.password === password) {
-        return true; 
+        return true;
       } else {
         return false;
       }
@@ -79,21 +79,28 @@ const Login = ({ navigation }) => {
     }
   };
 
-  const verifyCode = async () => {
-    if (smsCode === '1234') { 
+  // Function to verify parent code
+  const verifyCodeParent = () => {
+    if (smsCode === '1234') {
       setIsApproved(true);
-      Alert.alert("SMS verification successful! You are logged in.");
-  
-      // Example sleepData logic
-      const sleepData = { totalHours: 7 }; // Replace with actual sleep data logic
-  
-      // Navigate to WelcomeScreen and pass sleepData as a prop
-      navigation.navigate('GameWelcomeScreen', { sleepData });
+      Alert.alert("Parent SMS verification successful! You are logged in.");
+      navigation.navigate('ParentWelcomePage'); // Navigate to ParentWelcomePage for parent
     } else {
       Alert.alert("Invalid code. Please try again.");
     }
   };
-  
+
+  // Function to verify child code
+  const verifyCodeChild = () => {
+    if (smsCode === '1234') {
+      setIsApproved(true);
+      Alert.alert("Child SMS verification successful! You are logged in.");
+      const sleepData = { totalHours: 7 }; // Replace with actual sleep data logic
+      navigation.navigate('GameWelcomeScreen', { sleepData }); // Navigate to GameWelcomeScreen for child
+    } else {
+      Alert.alert("Invalid code. Please try again.");
+    }
+  };
 
   const getDescription = () => {
     if (userRole === 'parent') {
@@ -139,21 +146,29 @@ const Login = ({ navigation }) => {
             placeholder="Email"
             value={email}
             onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            placeholderTextColor="#36454F"
           />
           <TextInput
             style={styles.input}
             placeholder="Password"
             value={password}
-            onChangeText={setPassword}
             secureTextEntry
-            placeholderTextColor="#36454F"
+            onChangeText={setPassword}
           />
-          
-          {!isCodeSent && (
-            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+          {isCodeSent ? (
+            <>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter SMS Code"
+                value={smsCode}
+                onChangeText={setSmsCode}
+                keyboardType="numeric" // Numeric keyboard for SMS code input
+              />
+              <TouchableOpacity onPress={verifyCodeParent} style={styles.verifyButton}>
+                <Text style={styles.verifyButtonText}>Verify Code</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity onPress={handleLogin} style={styles.button}>
               <Text style={styles.buttonText}>Login</Text>
             </TouchableOpacity>
           )}
@@ -164,44 +179,37 @@ const Login = ({ navigation }) => {
         <>
           <TextInput
             style={styles.input}
-            placeholder="Parent Email"
+            placeholder="Enter Parent Email"
             value={username}
             onChangeText={setUsername}
-            autoCapitalize="none"
-            placeholderTextColor="#36454F"
           />
-          
-          {!isCodeSent && (
-            <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+          {isCodeSent ? (
+            <>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter SMS Code"
+                value={smsCode}
+                onChangeText={setSmsCode}
+                keyboardType="numeric" // Numeric keyboard for SMS code input
+              />
+              <TouchableOpacity onPress={verifyCodeChild} style={styles.verifyButton}>
+                <Text style={styles.verifyButtonText}>Verify Code</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity onPress={handleLogin} style={styles.button}>
               <Text style={styles.buttonText}>Login</Text>
             </TouchableOpacity>
           )}
         </>
       )}
 
-      {isCodeSent && !isApproved && (
-        <>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter SMS Code"
-            value={smsCode}
-            onChangeText={setSmsCode}
-            keyboardType="numeric"
-            placeholderTextColor="#36454F"
-          />
-          <TouchableOpacity style={styles.verifyButton} onPress={verifyCode}>
-            <Text style={styles.buttonText}>Verify Code</Text>
-          </TouchableOpacity>
-        </>
-      )}
-
+      {/* Conditionally render the description box only if a user role is selected */}
       {userRole && (
         <View style={styles.descriptionBox}>
           <Text style={styles.descriptionText}>{getDescription()}</Text>
         </View>
       )}
-
-      <StatusBar style="auto" />
     </View>
   );
 };
@@ -269,28 +277,32 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '500',
   },
-  selectedButton: {
-    backgroundColor: '#28353B',  // Darker shade for selected role button
+  verifyButtonText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '500',
   },
   descriptionBox: {
-    marginTop: 20,
-    backgroundColor: '#E8F6F3',
+    backgroundColor: '#E0E0E0',  // Light background for description box
     padding: 15,
     borderRadius: 10,
-    width: '100%',
-    alignItems: 'center',
+    marginTop: 20,
+    width: '90%',
   },
   descriptionText: {
-    color: '#36454F',
+    color: '#36454F',  // Dark text color for better readability
     fontSize: 16,
     textAlign: 'center',
   },
+  selectedButton: {
+    backgroundColor: '#A9A9A9',  // Light gray for selected button
+  },
   backButton: {
     position: 'absolute',
-    top: 20,  // Adjust as needed for spacing
+    top: 20,
     left: 20,
     padding: 10,
-    backgroundColor: '#F4F7F8',  // Same background color
+    backgroundColor: '#F4F7F8',
     borderColor: '#800080',
     borderWidth: 2,
     borderRadius: 30,
@@ -298,10 +310,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backButtonText: {
-    color: '#800080',  // Purple color for back button text
+    color: '#800080',
     fontSize: 18,
     fontWeight: '500',
   },
 });
 
 export default Login;
+
