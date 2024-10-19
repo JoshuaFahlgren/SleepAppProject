@@ -1,527 +1,587 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   StyleSheet,
+  Dimensions,
   ScrollView,
   Modal,
+  Alert,
 } from 'react-native';
-import { LineChart } from 'react-native-chart-kit';
-import { Dimensions } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons'; // Importing Ionicons
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LineChart, PieChart } from 'react-native-chart-kit';
+import moment from 'moment';
 
-// Adjusted data generator for realistic sleep data
-const generateRandomData = (length, min, max) => {
-  return Array.from({ length }, () => {
-    const random = Math.random() * (max - min) + min;
-    return parseFloat(random.toFixed(2));
-  });
-};
-
-const fakeData = {
-  parent: {
-    week: {
-      totalSleep: generateRandomData(7, 6, 8), // 6-8 hours
-      remSleep: generateRandomData(7, 1.5, 2), // 1.5-2 hours
-      sleepLatency: generateRandomData(7, 10, 20), // 10-20 mins
-    },
-    month: {
-      totalSleep: generateRandomData(30, 6, 8),
-      remSleep: generateRandomData(30, 1.5, 2),
-      sleepLatency: generateRandomData(30, 10, 20),
-    },
-  },
-  child: {
-    week: {
-      totalSleep: generateRandomData(7, 4, 7), // 8-10 hours
-      remSleep: generateRandomData(7, 1, 2), // 2-3 hours
-      sleepLatency: generateRandomData(7, 30, 45), // 5-15 mins
-    },
-    month: {
-      totalSleep: generateRandomData(30, 8, 10),
-      remSleep: generateRandomData(30, 2, 3),
-      sleepLatency: generateRandomData(30, 5, 15),
-    },
-  },
-};
+const screenWidth = Dimensions.get('window').width;
 
 const ParentWelcomePage = () => {
-  const [selectedTimeFrame, setSelectedTimeFrame] = useState(0); // 0: week, 1: month
-  const [selectedUser, setSelectedUser] = useState(0); // 0: parent, 1: child
-  const [settingsModalVisible, setSettingsModalVisible] = useState(false); // Modal state
+  const [selectedUser, setSelectedUser] = useState('parent'); // Parent or Child
+  const [selectedTimeFrame, setSelectedTimeFrame] = useState('lastNight'); // lastNight, week, or month
+  const [sleepData, setSleepData] = useState({ parent: [], child: [] });
+  const [modalVisible, setModalVisible] = useState(false); // For modal to add or edit data
+  const [editingIndex, setEditingIndex] = useState(null); // Keep track of editing index
+  const [day, setDay] = useState('');
+  const [totalSleep, setTotalSleep] = useState('');
+  const [remSleep, setRemSleep] = useState('');
+  const [coreSleep, setCoreSleep] = useState('');
+  const [deepSleep, setDeepSleep] = useState('');
+  const [awakeTime, setAwakeTime] = useState('');
 
-  const timeFrames = ['week', 'month'];
-  const users = ['parent', 'child'];
+  useEffect(() => {
+    const fetchSleepData = async () => {
+      try {
+        const storedUser = await AsyncStorage.getItem('user');
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          const storedSleepData = await AsyncStorage.getItem(
+            `sleepData_${parsedUser.email}`
+          );
+          if (storedSleepData) {
+            setSleepData(JSON.parse(storedSleepData));
+          }
+        }
+      } catch (err) {
+        console.error('Error retrieving sleep data:', err);
+      }
+    };
 
-  const getData = (metric) => {
-    const userData =
-      fakeData[users[selectedUser]][timeFrames[selectedTimeFrame]];
-    return userData ? userData[metric] : [];
-  };
+    fetchSleepData();
+  }, []);
 
-  const getLabels = () => {
-    if (timeFrames[selectedTimeFrame] === 'week') {
-      return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    } else if (timeFrames[selectedTimeFrame] === 'month') {
-      return Array.from({ length: 6 }, (_, i) => `${i * 5 + 1}`);
+  const handleAddOrEditSleep = async () => {
+    if (!day || !totalSleep || !remSleep || !coreSleep || !deepSleep || !awakeTime) {
+      Alert.alert('Please fill in all fields');
+      return;
     }
-    return [];
+
+    const newSleepEntry = {
+      day,
+      totalSleep,
+      remSleep,
+      coreSleep,
+      deepSleep,
+      awakeTime,
+    };
+
+    const updatedSleepData = { ...sleepData };
+
+    if (editingIndex !== null) {
+      // Update existing entry if in edit mode
+      updatedSleepData[selectedUser][editingIndex] = newSleepEntry;
+    } else {
+      // Add new entry if not in edit mode
+      updatedSleepData[selectedUser] = [...updatedSleepData[selectedUser], newSleepEntry];
+    }
+
+    // Sort the data by day
+    updatedSleepData[selectedUser].sort((a, b) => moment(a.day).diff(moment(b.day)));
+
+    setSleepData(updatedSleepData);
+    setModalVisible(false);
+    setEditingIndex(null); // Reset editing state
+
+    try {
+      const storedUser = await AsyncStorage.getItem('user');
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        await AsyncStorage.setItem(
+          `sleepData_${parsedUser.email}`,
+          JSON.stringify(updatedSleepData)
+        );
+        Alert.alert('Sleep data saved successfully!');
+      }
+    } catch (err) {
+      Alert.alert('Error storing sleep data: ', err.message);
+    }
+
+    // Clear inputs
+    setDay('');
+    setTotalSleep('');
+    setRemSleep('');
+    setCoreSleep('');
+    setDeepSleep('');
+    setAwakeTime('');
   };
 
-  const metricTitles = {
-    totalSleep: 'Total Sleep (Hours)',
-    remSleep: 'REM Sleep (Hours)',
-    sleepLatency: 'Sleep Latency (Minutes)',
+  const handleEditSleep = (index) => {
+    const entry = sleepData[selectedUser][index];
+    setDay(entry.day);
+    setTotalSleep(entry.totalSleep);
+    setRemSleep(entry.remSleep);
+    setCoreSleep(entry.coreSleep);
+    setDeepSleep(entry.deepSleep);
+    setAwakeTime(entry.awakeTime);
+    setEditingIndex(index);
+    setModalVisible(true);
   };
 
-  // Function to calculate averages
-  const getAverages = () => {
-    const totalSleep = getData('totalSleep');
-    const remSleep = getData('remSleep');
-    const sleepLatency = getData('sleepLatency');
+  const handleDeleteSleep = async (index) => {
+    const updatedSleepData = { ...sleepData };
+    updatedSleepData[selectedUser].splice(index, 1); // Remove the entry
 
-    const averageTotalSleep = (
-      totalSleep.reduce((a, b) => a + b, 0) / totalSleep.length
-    ).toFixed(2);
-    const averageRemSleep = (
-      remSleep.reduce((a, b) => a + b, 0) / remSleep.length
-    ).toFixed(2);
-    const averageSleepLatency = (
-      sleepLatency.reduce((a, b) => a + b, 0) / sleepLatency.length
-    ).toFixed(2);
+    setSleepData(updatedSleepData);
+
+    try {
+      const storedUser = await AsyncStorage.getItem('user');
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        await AsyncStorage.setItem(
+          `sleepData_${parsedUser.email}`,
+          JSON.stringify(updatedSleepData)
+        );
+        Alert.alert('Sleep entry deleted successfully!');
+      }
+    } catch (err) {
+      Alert.alert('Error deleting sleep entry: ', err.message);
+    }
+  };
+
+  const filterSleepData = (userType, timeframe) => {
+    const data = sleepData[userType] || [];
+    const today = moment();
+    let filteredData = [];
+
+    if (timeframe === 'lastNight') {
+      filteredData = data.filter(entry => moment(entry.day).isSame(today, 'day'));
+    } else if (timeframe === 'week') {
+      filteredData = data.filter(entry =>
+        moment(entry.day).isBetween(today.clone().subtract(7, 'days'), today, null, '[]')
+      );
+    } else if (timeframe === 'month') {
+      filteredData = data.filter(entry =>
+        moment(entry.day).isBetween(today.clone().subtract(30, 'days'), today, null, '[]')
+      );
+    }
+
+    return filteredData;
+  };
+
+  const userData = filterSleepData(selectedUser, selectedTimeFrame);
+
+  const generateLineChartData = (data, metric) => {
+    const labels = [];
+    const values = [];
+    data.forEach((entry) => {
+      const value = parseFloat(entry[metric] || 0);
+      if (!isNaN(value)) {
+        labels.push(moment(entry.day).format('MMM D'));
+        values.push(value);
+      }
+    });
 
     return {
-      averageTotalSleep: parseFloat(averageTotalSleep),
-      averageRemSleep: parseFloat(averageRemSleep),
-      averageSleepLatency: parseFloat(averageSleepLatency),
+      labels,
+      datasets: [{ data: values }],
     };
   };
 
-  // Function to determine sleep tips
-  const getSleepTips = () => {
-    const { averageTotalSleep, averageRemSleep, averageSleepLatency } =
-      getAverages();
+  const generatePieChartData = (data) => {
+    if (data.length === 0) return [];
 
-    let tips = [];
+    const totalRem = data.reduce((acc, entry) => acc + parseFloat(entry.remSleep || 0), 0);
+    const totalCore = data.reduce((acc, entry) => acc + parseFloat(entry.coreSleep || 0), 0);
+    const totalDeep = data.reduce((acc, entry) => acc + parseFloat(entry.deepSleep || 0), 0);
+    const entryCount = data.length;
 
-    // Decide pronouns based on selected user
-    const isParentSelected = selectedUser === 0;
-    const subject = isParentSelected ? 'you' : 'your child';
-    const possessive = isParentSelected ? 'your' : "your child's";
-    const possessiveCapitalized = isParentSelected ? 'You' : 'Your child';
-    const subjectCapitalized = isParentSelected ? 'Your' : 'Your child\'s';
+    const avgRem = entryCount > 0 ? totalRem / entryCount : 0;
+    const avgCore = entryCount > 0 ? totalCore / entryCount : 0;
+    const avgDeep = entryCount > 0 ? totalDeep / entryCount : 0;
 
-    // Provide tips based on total sleep
-    if (averageTotalSleep < 7) {
-      if (isParentSelected) {
-        tips.push(
-          'Establish a consistent sleep schedule by going to bed and waking up at the same time every day.'
-        );
-        tips.push(
-          "Create a relaxing bedtime routine, like reading a book or taking a warm bath, to signal your body it's time to sleep."
-        );
-        tips.push(
-          'Limit daytime naps to 20-30 minutes to avoid interfering with nighttime sleep.'
-        );
-      } else {
-        tips.push(
-          'Help your child establish a consistent sleep schedule by having them go to bed and wake up at the same time every day.'
-        );
-        tips.push(
-          'Create a relaxing bedtime routine for your child, like reading a book or taking a warm bath, to signal it\'s time to sleep.'
-        );
-        tips.push(
-          "Limit your child's daytime naps to avoid interfering with nighttime sleep."
-        );
-      }
-    } else {
-      tips.push(
-        `Great job maintaining a healthy sleep duration! Continue ${possessive} good sleep habits.`
-      );
-    }
-
-    // Provide tips based on REM sleep
-    if (averageRemSleep < 1.5) {
-      if (isParentSelected) {
-        tips.push(
-          'Incorporate stress-reduction techniques such as meditation or deep-breathing exercises before bed to enhance REM sleep.'
-        );
-        tips.push(
-          'Ensure your sleep environment is comfortable, cool, and dark to promote deeper REM sleep.'
-        );
-        tips.push(
-          'Avoid caffeine and sugary drinks before bedtime, as they can disrupt REM sleep.'
-        );
-      } else {
-        tips.push(
-          'Encourage your child to engage in calming activities like reading or gentle stretching before bed to enhance REM sleep.'
-        );
-        tips.push(
-          "Make sure your child's sleep environment is comfortable, cool, and dark to promote deeper REM sleep."
-        );
-        tips.push(
-          'Avoid giving your child caffeine or sugary drinks before bedtime, as they can disrupt REM sleep.'
-        );
-      }
-    } else {
-      tips.push(
-        `${subjectCapitalized} REM sleep is within a healthy range. Keep up the current routine!`
-      );
-    }
-
-    // Provide tips based on sleep latency
-    if (averageSleepLatency > 20) {
-      if (isParentSelected) {
-        tips.push(
-          'Limit screen time at least an hour before bed to help your mind wind down.'
-        );
-        tips.push(
-          'Avoid heavy meals in the evening to reduce the time it takes to fall asleep.'
-        );
-        tips.push(
-          'Consider engaging in relaxing activities like gentle stretching or listening to soothing music before bed.'
-        );
-      } else {
-        tips.push(
-          "Limit your child's screen time at least an hour before bed to help them wind down."
-        );
-        tips.push(
-          "Avoid giving your child heavy meals in the evening to reduce the time it takes them to fall asleep."
-        );
-        tips.push(
-          "Encourage relaxing activities like reading a story or listening to soothing music before your child's bedtime."
-        );
-      }
-    } else {
-      tips.push(
-        `${possessiveCapitalized} fall${
-          isParentSelected ? '' : 's'
-        } asleep quickly, which is a good sign of healthy sleep patterns.`
-      );
-    }
-
-    return tips;
+    return [
+      { name: `REM Sleep (${avgRem.toFixed(1)} hours)`, sleepType: avgRem, color: '#800080', legendFontColor: '#7F7F7F', legendFontSize: 15 },
+      { name: `Core Sleep (${avgCore.toFixed(1)} hours)`, sleepType: avgCore, color: '#C0C0C0', legendFontColor: '#7F7F7F', legendFontSize: 15 },
+      { name: `Deep Sleep (${avgDeep.toFixed(1)} hours)`, sleepType: avgDeep, color: '#D8BFD8', legendFontColor: '#7F7F7F', legendFontSize: 15 },
+    ];
   };
-
-  const { averageTotalSleep, averageRemSleep, averageSleepLatency } =
-    getAverages();
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Header with Settings Button */}
-      <View style={styles.headerContainer}>
-        <Text style={styles.headerText}>See Your Sleep</Text>
+      {/* Page Title */}
+      <Text style={styles.pageTitle}>View Sleep</Text>
+
+      {/* Toggle Buttons for Parent/Child */}
+      <View style={styles.toggleButtonsContainer}>
         <TouchableOpacity
-          onPress={() => setSettingsModalVisible(true)}
-          style={styles.settingsButton}
+          style={[styles.toggleButton, selectedUser === 'parent' ? styles.selectedButton : styles.unselectedButton]}
+          onPress={() => setSelectedUser('parent')}
         >
-          <Icon name="settings-outline" size={30} color="#800080" />
+          <Text style={selectedUser === 'parent' ? styles.selectedButtonText : styles.unselectedButtonText}>
+            Parent
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.toggleButton, selectedUser === 'child' ? styles.selectedButton : styles.unselectedButton]}
+          onPress={() => setSelectedUser('child')}
+        >
+          <Text style={selectedUser === 'child' ? styles.selectedButtonText : styles.unselectedButtonText}>
+            Child
+          </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Settings Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={settingsModalVisible}
-        onRequestClose={() => {
-          setSettingsModalVisible(!settingsModalVisible);
-        }}
-      >
+      {/* Time Frame Selector */}
+      <View style={styles.timeFrameSelector}>
+        <TouchableOpacity
+          style={[styles.timeFrameButton, selectedTimeFrame === 'lastNight' ? styles.selectedButton : styles.unselectedButton]}
+          onPress={() => setSelectedTimeFrame('lastNight')}
+        >
+          <Text style={selectedTimeFrame === 'lastNight' ? styles.selectedButtonText : styles.unselectedButtonText}>
+            Last Night
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.timeFrameButton, selectedTimeFrame === 'week' ? styles.selectedButton : styles.unselectedButton]}
+          onPress={() => setSelectedTimeFrame('week')}
+        >
+          <Text style={selectedTimeFrame === 'week' ? styles.selectedButtonText : styles.unselectedButtonText}>
+            Week
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.timeFrameButton, selectedTimeFrame === 'month' ? styles.selectedButton : styles.unselectedButton]}
+          onPress={() => setSelectedTimeFrame('month')}
+        >
+          <Text style={selectedTimeFrame === 'month' ? styles.selectedButtonText : styles.unselectedButtonText}>
+            Month
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Add Sleep Data Button */}
+      <TouchableOpacity style={styles.addSleepButton} onPress={() => setModalVisible(true)}>
+        <Text style={styles.addSleepButtonText}>+ Add Sleep</Text>
+      </TouchableOpacity>
+
+      {/* Pie Chart for Sleep Types */}
+      {userData.length > 0 && (
+        <>
+          <Text style={styles.chartTitle}>Sleep Breakdown</Text>
+          <PieChart
+            data={generatePieChartData(userData)}
+            width={screenWidth - 40}
+            height={220}
+            chartConfig={styles.chartConfig}
+            accessor="sleepType"
+            backgroundColor="transparent"
+            paddingLeft="15"
+            absolute
+          />
+        </>
+      )}
+
+      {/* Line Charts for Sleep Metrics */}
+      {userData.length > 0 && (
+        <>
+          <Text style={styles.chartTitle}>Total Sleep Over Time</Text>
+          <LineChart
+            data={generateLineChartData(userData, 'totalSleep')}
+            width={screenWidth - 40}
+            height={220}
+            chartConfig={styles.chartConfig}
+            bezier
+          />
+
+          <Text style={styles.chartTitle}>Awake Time Over Time</Text>
+          <LineChart
+            data={generateLineChartData(userData, 'awakeTime')}
+            width={screenWidth - 40}
+            height={220}
+            chartConfig={styles.chartConfig}
+            bezier
+          />
+
+          <Text style={styles.chartTitle}>REM Sleep Over Time</Text>
+          <LineChart
+            data={generateLineChartData(userData, 'remSleep')}
+            width={screenWidth - 40}
+            height={220}
+            chartConfig={styles.chartConfig}
+            bezier
+          />
+
+          <Text style={styles.chartTitle}>Core Sleep Over Time</Text>
+          <LineChart
+            data={generateLineChartData(userData, 'coreSleep')}
+            width={screenWidth - 40}
+            height={220}
+            chartConfig={styles.chartConfig}
+            bezier
+          />
+
+          <Text style={styles.chartTitle}>Deep Sleep Over Time</Text>
+          <LineChart
+            data={generateLineChartData(userData, 'deepSleep')}
+            width={screenWidth - 40}
+            height={220}
+            chartConfig={styles.chartConfig}
+            bezier
+          />
+        </>
+      )}
+
+      {/* Display Sleep Data Table with Edit/Delete Buttons */}
+      <View style={styles.sleepDataContainer}>
+        {sleepData[selectedUser].map((entry, index) => (
+          <View key={index} style={styles.sleepDataRow}>
+            <Text style={styles.sleepDataText}>
+              {`Day: ${entry.day}, Total: ${entry.totalSleep}, REM: ${entry.remSleep}, Core: ${entry.coreSleep}, Deep: ${entry.deepSleep}, Awake: ${entry.awakeTime}`}
+            </Text>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={() => handleEditSleep(index)}
+              >
+                <Text style={styles.editButtonText}>Edit</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() => handleDeleteSleep(index)}
+              >
+                <Text style={styles.deleteButtonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))}
+      </View>
+
+      {/* Add/Edit Sleep Modal */}
+      <Modal visible={modalVisible} transparent={true} animationType="slide">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Settings</Text>
-            <TouchableOpacity style={styles.modalButton}>
-              <Text style={styles.modalButtonText}>More Information</Text>
+            <Text style={styles.modalTitle}>
+              {editingIndex !== null ? 'Edit' : 'Add'} Sleep Data for {selectedUser === 'parent' ? 'Parent' : 'Child'}
+            </Text>
+
+            <TextInput
+              style={styles.input}
+              keyboardType="default"
+              placeholder="Day (YYYY-MM-DD)"
+              value={day}
+              onChangeText={setDay}
+            />
+
+            <TextInput
+              style={styles.input}
+              keyboardType="numeric"
+              placeholder="Total Sleep (hours)"
+              value={totalSleep}
+              onChangeText={setTotalSleep}
+            />
+
+            <TextInput
+              style={styles.input}
+              keyboardType="numeric"
+              placeholder="REM Sleep (hours)"
+              value={remSleep}
+              onChangeText={setRemSleep}
+            />
+
+            <TextInput
+              style={styles.input}
+              keyboardType="numeric"
+              placeholder="Core Sleep (hours)"
+              value={coreSleep}
+              onChangeText={setCoreSleep}
+            />
+
+            <TextInput
+              style={styles.input}
+              keyboardType="numeric"
+              placeholder="Deep Sleep (hours)"
+              value={deepSleep}
+              onChangeText={setDeepSleep}
+            />
+
+            <TextInput
+              style={styles.input}
+              keyboardType="numeric"
+              placeholder="Awake Time (hours)"
+              value={awakeTime}
+              onChangeText={setAwakeTime}
+            />
+
+            <TouchableOpacity style={styles.modalButton} onPress={handleAddOrEditSleep}>
+              <Text style={styles.modalButtonText}>Submit</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.modalButton}>
-              <Text style={styles.modalButtonText}>Take a Sleep Survey</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.modalButton}>
-              <Text style={styles.modalButtonText}>
-                Delete Your Family Account
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.modalCloseButton}
-              onPress={() => setSettingsModalVisible(!settingsModalVisible)}
-            >
-              <Text style={styles.modalCloseButtonText}>Close</Text>
+            <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>
+              <Text style={styles.modalButtonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
-
-      {/* Time Frame and User Selection */}
-      <View style={styles.groupContainer}>
-        <View style={styles.buttonGroup}>
-          <TouchableOpacity
-            style={[
-              styles.button,
-              selectedTimeFrame === 0 && styles.selectedButton,
-            ]}
-            onPress={() => setSelectedTimeFrame(0)}
-          >
-            <Text style={styles.buttonText}>Week</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.button,
-              selectedTimeFrame === 1 && styles.selectedButton,
-            ]}
-            onPress={() => setSelectedTimeFrame(1)}
-          >
-            <Text style={styles.buttonText}>Month</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.buttonGroup}>
-          <TouchableOpacity
-            style={[styles.button, selectedUser === 0 && styles.selectedButton]}
-            onPress={() => setSelectedUser(0)}
-          >
-            <Text style={styles.buttonText}>Parent</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, selectedUser === 1 && styles.selectedButton]}
-            onPress={() => setSelectedUser(1)}
-          >
-            <Text style={styles.buttonText}>Child</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Graphs for each metric */}
-      {['totalSleep', 'remSleep', 'sleepLatency'].map((metric, idx) => (
-        <View key={idx} style={styles.chartContainer}>
-          {/* Chart Title */}
-          <Text style={styles.chartTitle}>{metricTitles[metric]}</Text>
-
-          {/* Line Chart */}
-          <LineChart
-            data={{
-              labels: getLabels(),
-              datasets: [{ data: getData(metric) }],
-            }}
-            width={Dimensions.get('window').width - 40}
-            height={220}
-            yAxisLabel=""
-            yAxisSuffix={metric === 'sleepLatency' ? 'm' : 'h'}
-            chartConfig={{
-              backgroundColor: '#F4F7F8',
-              backgroundGradientFrom: '#F4F7F8',
-              backgroundGradientTo: '#E0E0E0',
-              decimalPlaces: 2,
-              color: (opacity = 1) => `rgba(128, 0, 128, ${opacity})`,
-              labelColor: (opacity = 1) => `rgba(128, 0, 128, ${opacity})`,
-              propsForDots: {
-                r: '6',
-                strokeWidth: '2',
-                stroke: '#800080',
-              },
-              hideLegend: true,
-              hidePointsAtIndex: [],
-              hideDots: false,
-              hideAxes: true,
-              hideGridLines: true,
-            }}
-            bezier
-            style={styles.chart}
-          />
-        </View>
-      ))}
-
-      {/* Averages Section */}
-      <View style={styles.averagesContainer}>
-        <Text style={styles.tipsHeaderText}>
-          Averages for the {timeFrames[selectedTimeFrame]}
-        </Text>
-        <View style={styles.averageTextContainer}>
-          <Text style={styles.averageText}>
-            • Total Sleep: {averageTotalSleep} hours
-          </Text>
-          <Text style={styles.averageText}>
-            • REM Sleep: {averageRemSleep} hours
-          </Text>
-          <Text style={styles.averageText}>
-            • Sleep Latency: {averageSleepLatency} minutes
-          </Text>
-        </View>
-      </View>
-
-      {/* Sleep Tips Based on Data */}
-      <View style={styles.sleepTipsContainer}>
-        <Text style={styles.tipsHeaderText}>Data Informed Sleep Tips</Text>
-        <View style={styles.tipTextContainer}>
-          {getSleepTips().map((tip, idx) => (
-            <Text key={idx} style={styles.tipText}>
-              • {tip}
-            </Text>
-          ))}
-        </View>
-      </View>
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
+    padding: 20,
     backgroundColor: '#F4F7F8',
     alignItems: 'center',
-    padding: 20,
   },
-  // Header with Settings Button
-  headerContainer: {
-    width: '100%',
-    alignItems: 'center', // Center the title horizontally
-    marginBottom: 20,
-    position: 'relative', // Allow absolute positioning within this container
-  },
-  headerText: {
-    fontSize: 36,
+  pageTitle: {
+    fontSize: 32,
     fontWeight: 'bold',
+    marginBottom: 20,
     color: '#800080',
-    textAlign: 'center',
   },
-  settingsButton: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    padding: 10,
-  },
-  groupContainer: {
-    width: '100%',
-    marginBottom: 15,
-  },
-  buttonGroup: {
+  toggleButtonsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: '#800080',
-    borderRadius: 10,
-    padding: 2,
-    marginBottom: 10,
+    marginBottom: 20,
   },
-  button: {
-    backgroundColor: '#E0E0E0',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 30,
+  toggleButton: {
     flex: 1,
-    marginHorizontal: 5,
+    padding: 8,
+    borderWidth: 1,
+    borderRadius: 25, // Pill-shaped
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 3,
-    height: 40,
+    marginHorizontal: 5,
   },
   selectedButton: {
     backgroundColor: '#800080',
+    borderColor: '#800080',
   },
-  buttonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '500',
+  unselectedButton: {
+    backgroundColor: '#E0E0E0',
+    borderColor: '#800080',
   },
-  chartContainer: {
+  selectedButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+  },
+  unselectedButtonText: {
+    color: '#800080',
+    fontSize: 14,
+  },
+  timeFrameSelector: {
+    flexDirection: 'row',
     marginBottom: 20,
   },
-  chartTitle: {
-    fontSize: 18,
+  timeFrameButton: {
+    flex: 1,
+    padding: 8,
+    borderWidth: 1,
+    borderRadius: 25, // Pill-shaped
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  addSleepButton: {
+    backgroundColor: '#800080',
+    paddingVertical: 10,
+    paddingHorizontal: 25,
+    borderRadius: 25, // Pill-shaped
+    marginTop: 20,
+  },
+  addSleepButtonText: {
+    color: '#FFF',
+    fontSize: 16,
     fontWeight: '600',
-    color: '#800080',
-    textAlign: 'center',
+  },
+  chartTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#36454F',
+    marginTop: 20,
     marginBottom: 10,
   },
-  chart: {
-    marginVertical: 8,
-    borderRadius: 16,
+  chartConfig: {
+    backgroundColor: '#F4F7F8',
+    backgroundGradientFrom: '#F4F7F8',
+    backgroundGradientTo: '#E0E0E0',
+    decimalPlaces: 1,
+    color: (opacity = 1) => `rgba(128, 0, 128, ${opacity})`,
+    labelColor: (opacity = 1) => `rgba(128, 0, 128, ${opacity})`,
+    style: {
+      borderRadius: 16,
+    },
+    propsForDots: {
+      r: '6',
+      strokeWidth: '2',
+      stroke: '#800080',
+    },
   },
-  averagesContainer: {
+  sleepDataContainer: {
     marginTop: 20,
-    padding: 20, // Increased padding
-    backgroundColor: '#E0E0E0',
-    borderRadius: 10,
     width: '100%',
   },
-  averageTextContainer: {
-    marginTop: 10,
-  },
-  averageText: {
-    fontSize: 18,
-    color: '#36454F',
-    marginBottom: 10, // Increased margin between lines
-    lineHeight: 24, // Increased line height for better readability
-    textAlign: 'left',
-  },
-  sleepTipsContainer: {
-    marginTop: 30,
-    padding: 20, // Increased padding
+  sleepDataRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 10,
     backgroundColor: '#E0E0E0',
     borderRadius: 10,
-    width: '100%',
+    marginVertical: 5,
+    flexWrap: 'wrap',
   },
-  tipTextContainer: {
-    marginTop: 10,
-  },
-  tipsHeaderText: {
-    fontSize: 26,
-    fontWeight: 'bold',
-    color: '#800080',
-    marginBottom: 15, // Increased bottom margin
-    textAlign: 'center',
-  },
-  tipText: {
-    fontSize: 18,
+  sleepDataText: {
+    fontSize: 12,
     color: '#36454F',
-    marginBottom: 15, // Increased margin between tips
-    lineHeight: 24, // Increased line height for better readability
-    textAlign: 'left',
+    flex: 1,
   },
-  // Modal Styles
+  buttonContainer: {
+    flexDirection: 'row',
+  },
+  editButton: {
+    backgroundColor: '#800080',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 25, // Pill-shaped
+    marginLeft: 10,
+  },
+  editButtonText: {
+    color: '#FFF',
+    fontSize: 12,
+  },
+  deleteButton: {
+    backgroundColor: '#FF6347',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 25, // Pill-shaped
+    marginLeft: 10,
+  },
+  deleteButtonText: {
+    color: '#FFF',
+    fontSize: 12,
+  },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 22,
-    backgroundColor: 'rgba(0,0,0,0.5)', // Semi-transparent background
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    width: '80%',
-    backgroundColor: '#fff',
-    borderRadius: 10,
+    backgroundColor: '#FFF',
     padding: 20,
+    marginHorizontal: 20,
+    borderRadius: 10,
     alignItems: 'center',
-    elevation: 5,
   },
   modalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#800080',
     marginBottom: 20,
   },
   modalButton: {
-    width: '100%',
-    padding: 15,
-    borderRadius: 10,
-    backgroundColor: '#E0E0E0',
-    alignItems: 'center',
-    marginBottom: 10,
+    backgroundColor: '#800080',
+    padding: 12,
+    marginTop: 10,
+    borderRadius: 25, // Pill-shaped
   },
   modalButtonText: {
-    fontSize: 18,
-    color: '#36454F',
+    color: '#FFF',
+    fontSize: 16,
   },
-  modalCloseButton: {
-    marginTop: 10,
-  },
-  modalCloseButtonText: {
-    fontSize: 18,
-    color: '#800080',
+  input: {
+    borderWidth: 1,
+    borderColor: '#800080',
+    borderRadius: 10,
+    padding: 10,
+    marginVertical: 10,
+    width: 250,
+    fontSize: 16,
+    textAlign: 'center',
   },
 });
 
