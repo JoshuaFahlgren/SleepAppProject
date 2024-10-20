@@ -196,6 +196,65 @@ const ParentWelcomePage = () => {
     ];
   };
 
+  const renderSleepTips = () => {
+    const sleepAdvice = {
+      adult: {
+        totalSleep: { range: '7-9 hours', advice: 'Aim for at least 7 hours of total sleep. Consider adjusting your schedule for more rest.' },
+        remSleep: { range: '1.5-2.5 hours', advice: 'Increase relaxation time before bed to improve REM sleep.' },
+        deepSleep: { range: '1.5-2 hours', advice: 'Create a dark, cool environment to enhance deep sleep quality.' },
+        awakeTime: { range: '0.5-1 hour', advice: 'Limit caffeine and screen time before bed to reduce awake time.' },
+      },
+      child: {
+        totalSleep: { range: '9-12 hours', advice: 'Ensure a consistent bedtime to meet sleep requirements.' },
+        remSleep: { range: '1.5-3 hours', advice: 'Encourage a calming bedtime routine to enhance REM sleep.' },
+        deepSleep: { range: '2-4 hours', advice: 'Consider eliminating distractions to improve deep sleep duration.' },
+        awakeTime: { range: '0.5-1 hour', advice: 'Monitor evening activities that could prolong awake time.' },
+      },
+    };
+
+    const selectedAdvice = selectedUser === 'parent' ? sleepAdvice.adult : sleepAdvice.child;
+    const tips = [];
+
+    // Total Sleep Tips
+    if (parseFloat(totalSleep) < 7 && selectedUser === 'parent') {
+      tips.push(<Text key="totalSleepTip" style={styles.tipText}>You are undersleeping. {selectedAdvice.totalSleep.advice}</Text>);
+    } else if (parseFloat(totalSleep) < 9 && selectedUser === 'child') {
+      tips.push(<Text key="totalSleepTip" style={styles.tipText}>You are undersleeping. {selectedAdvice.totalSleep.advice}</Text>);
+    }
+
+    // REM Sleep Tips
+    if (parseFloat(remSleep) < 1.5 && selectedUser === 'parent') {
+      tips.push(<Text key="remSleepTip" style={styles.tipText}>You are undersleeping in REM sleep. {selectedAdvice.remSleep.advice}</Text>);
+    } else if (parseFloat(remSleep) < 1.5 && selectedUser === 'child') {
+      tips.push(<Text key="remSleepTip" style={styles.tipText}>You are undersleeping in REM sleep. {selectedAdvice.remSleep.advice}</Text>);
+    }
+
+    // Deep Sleep Tips
+    if (parseFloat(deepSleep) < 1.5 && selectedUser === 'parent') {
+      tips.push(<Text key="deepSleepTip" style={styles.tipText}>You are undersleeping in deep sleep. {selectedAdvice.deepSleep.advice}</Text>);
+    } else if (parseFloat(deepSleep) < 2 && selectedUser === 'child') {
+      tips.push(<Text key="deepSleepTip" style={styles.tipText}>You are undersleeping in deep sleep. {selectedAdvice.deepSleep.advice}</Text>);
+    }
+
+    // Awake Time Tips
+    if (parseFloat(awakeTime) > 1 && selectedUser === 'parent') {
+      tips.push(<Text key="awakeTimeTip" style={styles.tipText}>Your awake time is too high. {selectedAdvice.awakeTime.advice}</Text>);
+    } else if (parseFloat(awakeTime) > 1 && selectedUser === 'child') {
+      tips.push(<Text key="awakeTimeTip" style={styles.tipText}>Your awake time is too high. {selectedAdvice.awakeTime.advice}</Text>);
+    }
+
+    return (
+      <View style={styles.tipsContainer}>
+        <Text style={styles.tipsTitle}>Sleep Tips</Text>
+        {tips.length === 0 ? (
+          <Text style={styles.tipText}>You're doing well! Keep up the good sleep habits.</Text>
+        ) : (
+          tips
+        )}
+      </View>
+    );
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {/* Page Title */}
@@ -411,6 +470,9 @@ const ParentWelcomePage = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Sleep Tips Section */}
+      {renderSleepTips()}
     </ScrollView>
   );
 };
@@ -582,6 +644,26 @@ const styles = StyleSheet.create({
     width: 250,
     fontSize: 16,
     textAlign: 'center',
+  },
+  tipsContainer: {
+    marginTop: 20,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#800080',
+    borderRadius: 10,
+    width: '100%',
+    backgroundColor: '#E0E0E0',
+  },
+  tipsTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#800080',
+    marginBottom: 10,
+  },
+  tipText: {
+    fontSize: 14,
+    color: '#36454F',
+    marginBottom: 5,
   },
 });
 
