@@ -246,16 +246,18 @@ const ParentWelcomePage = () => {
 
     const sleepAdvice = {
       adult: {
-        totalSleep: { range: '7-9 hours', advice: 'Aim for at least 7 hours of total sleep. Consider adjusting your schedule for more rest.' },
-        remSleep: { range: '1.5-2.5 hours', advice: 'Increase relaxation time before bed to improve REM sleep.' },
-        deepSleep: { range: '1.5-2 hours', advice: 'Create a dark, cool environment to enhance deep sleep quality.' },
-        awakeTime: { range: '0.5-1 hour', advice: 'Limit caffeine and screen time before bed to reduce awake time.' },
+        totalSleep: { range: '7-9 hours', advice: 'Aim for 7-9 hours of total sleep. Consider adjusting your schedule to prioritize consistent sleep patterns.' },
+        remSleep: { range: '20-25% of total sleep', advice: 'REM sleep is crucial for cognitive function and emotional regulation. To improve REM sleep, maintain a consistent sleep schedule and avoid alcohol before bed.' },
+        coreSleep: { range: '50-60% of total sleep', advice: 'Light sleep is important for memory consolidation and learning. To enhance core sleep, create a relaxing bedtime routine and ensure your sleeping environment is comfortable.' },
+        deepSleep: { range: '15-25% of total sleep', advice: 'Deep sleep is essential for physical recovery and growth. To increase deep sleep, exercise regularly and avoid caffeine in the afternoon and evening.' },
+        awakeTime: { range: '5-10% of total sleep', advice: 'Some awake time during the night is normal. To minimize disruptions, keep your bedroom dark, quiet, and cool.' },
       },
       child: {
-        totalSleep: { range: '9-12 hours', advice: 'Ensure a consistent bedtime to meet sleep requirements.' },
-        remSleep: { range: '1.5-3 hours', advice: 'Encourage a calming bedtime routine to enhance REM sleep.' },
-        deepSleep: { range: '2-4 hours', advice: 'Consider eliminating distractions to improve deep sleep duration.' },
-        awakeTime: { range: '0.5-1 hour', advice: 'Monitor evening activities that could prolong awake time.' },
+        totalSleep: { range: '9-12 hours', advice: 'Children need more sleep for proper growth and development. Establish a consistent bedtime routine to ensure adequate sleep.' },
+        remSleep: { range: '20-25% of total sleep', advice: 'REM sleep is vital for a child\'s brain development. Encourage a regular sleep schedule and limit screen time before bed to improve REM sleep.' },
+        coreSleep: { range: '45-55% of total sleep', advice: 'Light sleep helps children process and consolidate information learned during the day. Create a calm environment before bedtime to promote quality core sleep.' },
+        deepSleep: { range: '20-30% of total sleep', advice: 'Deep sleep is crucial for a child\'s physical growth. Encourage physical activity during the day to promote deeper sleep at night.' },
+        awakeTime: { range: '5-10% of total sleep', advice: 'Brief awakenings are normal for children. Ensure the child\'s room is conducive to sleep and address any anxieties that might disrupt sleep.' },
       },
     };
 
@@ -265,28 +267,28 @@ const ParentWelcomePage = () => {
       {
         name: 'REM',
         population: parseFloat(averages.remSleep),
-        color: '#8A2BE2', // BlueViolet
+        color: '#8E44AD', // Deep purple
         legendFontColor: '#7F7F7F',
         legendFontSize: 12,
       },
       {
         name: 'Core',
         population: parseFloat(averages.coreSleep),
-        color: '#9370DB', // MediumPurple
+        color: '#9B59B6', // Medium purple
         legendFontColor: '#7F7F7F',
         legendFontSize: 12,
       },
       {
         name: 'Deep',
         population: parseFloat(averages.deepSleep),
-        color: '#BA55D3', // MediumOrchid
+        color: '#AF7AC5', // Light purple
         legendFontColor: '#7F7F7F',
         legendFontSize: 12,
       },
       {
         name: 'Awake',
         population: parseFloat(averages.awakeTime),
-        color: '#DDA0DD', // Plum
+        color: '#D7BDE2', // Very light purple
         legendFontColor: '#7F7F7F',
         legendFontSize: 12,
       },
@@ -294,7 +296,7 @@ const ParentWelcomePage = () => {
 
     return (
       <View style={styles.tipsContainer}>
-        <Text style={styles.tipsTitle}>Sleep Tips</Text>
+        <Text style={styles.tipsTitle}>Sleep Analysis</Text>
         
         {/* Display Average Metrics */}
         <View style={styles.averageContainer}>
@@ -311,45 +313,48 @@ const ParentWelcomePage = () => {
           data={pieChartData}
           width={screenWidth - 60}
           height={200}
-          chartConfig={chartConfig}
+          chartConfig={{
+            color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+          }}
           accessor="population"
           backgroundColor="transparent"
           paddingLeft="15"
-          absolute
+          absolute={false}
         />
 
+        {/* Sleep Description */}
+        <View style={styles.sleepDescriptionContainer}>
+          <Text style={styles.sleepDescriptionTitle}>Understanding Your Sleep Stages</Text>
+          <Text style={styles.sleepDescriptionText}>
+            • REM (Rapid Eye Movement): Essential for cognitive functions like memory consolidation and learning.
+          </Text>
+          <Text style={styles.sleepDescriptionText}>
+            • Core (Light) Sleep: Helps with mental and physical recovery, and makes up the largest portion of your sleep cycle.
+          </Text>
+          <Text style={styles.sleepDescriptionText}>
+            • Deep Sleep: Crucial for physical recovery, immune function, and growth.
+          </Text>
+          <Text style={styles.sleepDescriptionText}>
+            • Awake Time: Brief periods of wakefulness are normal during the night and typically forgotten by morning.
+          </Text>
+        </View>
+
         {/* Tips Based on Averages */}
-        {/* Total Sleep Tips */}
-        {parseFloat(averages.totalSleep) < 7 && selectedUser === 'parent' && (
-          <Text style={styles.tipText}>You are undersleeping. {selectedAdvice.totalSleep.advice}</Text>
-        )}
-        {parseFloat(averages.totalSleep) < 9 && selectedUser === 'child' && (
-          <Text style={styles.tipText}>You are undersleeping. {selectedAdvice.totalSleep.advice}</Text>
-        )}
-
-        {/* REM Sleep Tips */}
-        {parseFloat(averages.remSleep) < 1.5 && selectedUser === 'parent' && (
-          <Text style={styles.tipText}>You are undersleeping in REM sleep. {selectedAdvice.remSleep.advice}</Text>
-        )}
-        {parseFloat(averages.remSleep) < 1.5 && selectedUser === 'child' && (
-          <Text style={styles.tipText}>You are undersleeping in REM sleep. {selectedAdvice.remSleep.advice}</Text>
-        )}
-
-        {/* Deep Sleep Tips */}
-        {parseFloat(averages.deepSleep) < 1.5 && selectedUser === 'parent' && (
-          <Text style={styles.tipText}>You are undersleeping in deep sleep. {selectedAdvice.deepSleep.advice}</Text>
-        )}
-        {parseFloat(averages.deepSleep) < 2 && selectedUser === 'child' && (
-          <Text style={styles.tipText}>You are undersleeping in deep sleep. {selectedAdvice.deepSleep.advice}</Text>
-        )}
-
-        {/* Awake Time Tips */}
-        {parseFloat(averages.awakeTime) > 1 && selectedUser === 'parent' && (
-          <Text style={styles.tipText}>Your awake time is too high. {selectedAdvice.awakeTime.advice}</Text>
-        )}
-        {parseFloat(averages.awakeTime) > 1 && selectedUser === 'child' && (
-          <Text style={styles.tipText}>Your awake time is too high. {selectedAdvice.awakeTime.advice}</Text>
-        )}
+        <View style={styles.tipsSection}>
+          <Text style={styles.tipsSectionTitle}>Personalized Sleep Tips</Text>
+          {parseFloat(averages.totalSleep) < (selectedUser === 'parent' ? 7 : 9) && (
+            <Text style={styles.tipText}>{selectedAdvice.totalSleep.advice}</Text>
+          )}
+          {parseFloat(averages.remSleep) < 1.5 && (
+            <Text style={styles.tipText}>{selectedAdvice.remSleep.advice}</Text>
+          )}
+          {parseFloat(averages.deepSleep) < (selectedUser === 'parent' ? 1.5 : 2) && (
+            <Text style={styles.tipText}>{selectedAdvice.deepSleep.advice}</Text>
+          )}
+          {parseFloat(averages.awakeTime) > 1 && (
+            <Text style={styles.tipText}>{selectedAdvice.awakeTime.advice}</Text>
+          )}
+        </View>
       </View>
     );
   };
@@ -431,8 +436,11 @@ const ParentWelcomePage = () => {
         </TouchableOpacity>
       </View>
 
+      {/* Sleep Tips Section */}
+      {renderSleepTips()}
+
       {/* Line Charts for Sleep Metrics */}
-      {userData.length > 0 ? (
+      {userData.length > 0 && selectedTimeFrame !== 'lastNight' ? (
         <>
           <Text style={styles.chartTitle}>Total Sleep Over Time</Text>
           <LineChart
@@ -480,11 +488,13 @@ const ParentWelcomePage = () => {
           />
         </>
       ) : (
-        <Text style={styles.noDataText}>
-          {selectedTimeFrame === 'lastNight' 
-            ? `No sleep data available for last night for the ${selectedUser}.` 
-            : `No data available for the selected time frame for the ${selectedUser}.`}
-        </Text>
+        userData.length === 0 && (
+          <Text style={styles.noDataText}>
+            {selectedTimeFrame === 'lastNight' 
+              ? `No sleep data available for last night for the ${selectedUser}.` 
+              : `No data available for the selected time frame for the ${selectedUser}.`}
+          </Text>
+        )
       )}
 
       {/* Display Sleep Data Table with Edit/Delete Buttons */}
@@ -584,9 +594,6 @@ const ParentWelcomePage = () => {
           </View>
         </View>
       </Modal>
-
-      {/* Sleep Tips Section */}
-      {renderSleepTips()}
     </ScrollView>
   );
 };
@@ -696,7 +703,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   deleteButton: {
-    backgroundColor: '#FF6347',
+    backgroundColor: '#FF0000', // Red color for delete button
     paddingVertical: 5,
     paddingHorizontal: 10,
     borderRadius: 25, // Pill-shaped
@@ -745,43 +752,64 @@ const styles = StyleSheet.create({
   },
   tipsContainer: {
     marginTop: 20,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#800080',
+    padding: 15,
     borderRadius: 10,
-    width: '100%',
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#F0F0F0',
   },
   tipsTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#800080',
-    marginBottom: 10,
+    color: '#333',
+    marginBottom: 15,
   },
   averageContainer: {
-    marginBottom: 10,
+    marginBottom: 20,
   },
   metricLabel: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#36454F',
-  },
-  metricValue: {
-    fontWeight: 'normal',
-    color: '#800080',
-  },
-  tipText: {
-    fontSize: 14,
-    color: '#36454F',
+    color: '#555',
     marginBottom: 5,
   },
-  chartTitle: {
-    fontSize: 18,
+  metricValue: {
     fontWeight: 'bold',
-    color: '#800080',
+    color: '#333',
+  },
+  chartTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
     marginTop: 20,
     marginBottom: 10,
     textAlign: 'center',
+  },
+  sleepDescriptionContainer: {
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  sleepDescriptionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  sleepDescriptionText: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 5,
+  },
+  tipsSection: {
+    marginTop: 20,
+  },
+  tipsSectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  tipText: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 10,
   },
   noDataText: {
     fontSize: 16,
