@@ -29,6 +29,7 @@ const ParentWelcomePage = () => {
   const [deepSleep, setDeepSleep] = useState('');
   const [awakeTime, setAwakeTime] = useState('');
   const [dayPlaceholder, setDayPlaceholder] = useState('YYYYMMDD');
+  const [sleepDataModalVisible, setSleepDataModalVisible] = useState(false);
 
   useEffect(() => {
     const fetchSleepData = async () => {
@@ -294,6 +295,16 @@ const ParentWelcomePage = () => {
       },
     ];
 
+    // Function to check if any tips are needed
+    const needsTips = () => {
+      return (
+        parseFloat(averages.totalSleep) < (selectedUser === 'parent' ? 7 : 9) ||
+        parseFloat(averages.remSleep) < 1.5 ||
+        parseFloat(averages.deepSleep) < (selectedUser === 'parent' ? 1.5 : 2) ||
+        parseFloat(averages.awakeTime) > 1
+      );
+    };
+
     return (
       <View style={styles.tipsContainer}>
         <Text style={styles.tipsTitle}>Sleep Analysis</Text>
@@ -342,17 +353,25 @@ const ParentWelcomePage = () => {
         {/* Tips Based on Averages */}
         <View style={styles.tipsSection}>
           <Text style={styles.tipsSectionTitle}>Personalized Sleep Tips</Text>
-          {parseFloat(averages.totalSleep) < (selectedUser === 'parent' ? 7 : 9) && (
-            <Text style={styles.tipText}>{selectedAdvice.totalSleep.advice}</Text>
-          )}
-          {parseFloat(averages.remSleep) < 1.5 && (
-            <Text style={styles.tipText}>{selectedAdvice.remSleep.advice}</Text>
-          )}
-          {parseFloat(averages.deepSleep) < (selectedUser === 'parent' ? 1.5 : 2) && (
-            <Text style={styles.tipText}>{selectedAdvice.deepSleep.advice}</Text>
-          )}
-          {parseFloat(averages.awakeTime) > 1 && (
-            <Text style={styles.tipText}>{selectedAdvice.awakeTime.advice}</Text>
+          {needsTips() ? (
+            <>
+              {parseFloat(averages.totalSleep) < (selectedUser === 'parent' ? 7 : 9) && (
+                <Text style={styles.tipText}>{selectedAdvice.totalSleep.advice}</Text>
+              )}
+              {parseFloat(averages.remSleep) < 1.5 && (
+                <Text style={styles.tipText}>{selectedAdvice.remSleep.advice}</Text>
+              )}
+              {parseFloat(averages.deepSleep) < (selectedUser === 'parent' ? 1.5 : 2) && (
+                <Text style={styles.tipText}>{selectedAdvice.deepSleep.advice}</Text>
+              )}
+              {parseFloat(averages.awakeTime) > 1 && (
+                <Text style={styles.tipText}>{selectedAdvice.awakeTime.advice}</Text>
+              )}
+            </>
+          ) : (
+            <Text style={styles.encouragementText}>
+              Great job! Your sleep patterns are looking healthy. Keep up the good work and continue maintaining your consistent sleep routine. Remember, quality sleep is key to overall well-being and performance.
+            </Text>
           )}
         </View>
       </View>
@@ -376,14 +395,70 @@ const ParentWelcomePage = () => {
     }
   };
 
+  const renderSleepDataModal = () => (
+    <Modal
+      visible={sleepDataModalVisible}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={() => setSleepDataModalVisible(false)}
+    >
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Sleep Data</Text>
+          <ScrollView>
+            {sleepData[selectedUser].map((entry, index) => (
+              <View key={index} style={styles.sleepDataRow}>
+                <Text style={styles.sleepDataText}>
+                  {`Day: ${entry.day}, Total: ${entry.totalSleep}, REM: ${entry.remSleep}, Core: ${entry.coreSleep}, Deep: ${entry.deepSleep}, Awake: ${entry.awakeTime}`}
+                </Text>
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity
+                    style={styles.editButton}
+                    onPress={() => {
+                      setSleepDataModalVisible(false);
+                      handleEditSleep(index);
+                    }}
+                  >
+                    <Text style={styles.editButtonText}>Edit</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={() => handleDeleteSleep(index)}
+                  >
+                    <Text style={styles.deleteButtonText}>Delete</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setSleepDataModalVisible(false)}
+          >
+            <Text style={styles.closeButtonText}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {/* Header Section */}
       <View style={styles.headerContainer}>
+        <TouchableOpacity
+          style={styles.editSleepButton}
+          onPress={() => setSleepDataModalVisible(true)}
+        >
+          <Text style={styles.editSleepButtonText}>- Edit Sleep</Text>
+        </TouchableOpacity>
         <View style={styles.titleContainer}>
           <Text style={styles.pageTitle}>View Sleep</Text>
         </View>
-        <TouchableOpacity style={styles.addSleepButton} onPress={() => setModalVisible(true)}>
+        <TouchableOpacity
+          style={styles.addSleepButton}
+          onPress={() => setModalVisible(true)}
+        >
           <Text style={styles.addSleepButtonText}>+ Add Sleep</Text>
         </TouchableOpacity>
       </View>
@@ -497,30 +572,8 @@ const ParentWelcomePage = () => {
         )
       )}
 
-      {/* Display Sleep Data Table with Edit/Delete Buttons */}
-      <View style={styles.sleepDataContainer}>
-        {sleepData[selectedUser].map((entry, index) => (
-          <View key={index} style={styles.sleepDataRow}>
-            <Text style={styles.sleepDataText}>
-              {`Day: ${entry.day}, Total: ${entry.totalSleep}, REM: ${entry.remSleep}, Core: ${entry.coreSleep}, Deep: ${entry.deepSleep}, Awake: ${entry.awakeTime}`}
-            </Text>
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => handleEditSleep(index)}
-              >
-                <Text style={styles.editButtonText}>Edit</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={() => handleDeleteSleep(index)}
-              >
-                <Text style={styles.deleteButtonText}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
-      </View>
+      {/* Sleep Data Modal */}
+      {renderSleepDataModal()}
 
       {/* Add/Edit Sleep Modal */}
       <Modal visible={modalVisible} transparent={true} animationType="slide">
@@ -608,13 +661,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
+    paddingHorizontal: 10,
+  },
+  editSleepButton: {
+    backgroundColor: '#800080',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 25, // Pill-shaped
+  },
+  editSleepButtonText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
   titleContainer: {
     flex: 1,
     alignItems: 'center',
   },
   pageTitle: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#800080',
   },
@@ -817,6 +882,46 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
     marginBottom: 20,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#FFF',
+    borderRadius: 10,
+    padding: 20,
+    width: '90%',
+    maxHeight: '80%',
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#800080',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  closeButton: {
+    backgroundColor: '#800080',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    alignSelf: 'center',
+    marginTop: 20,
+  },
+  closeButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  encouragementText: {
+    fontSize: 16,
+    color: '#4A0E4E', // A shade of purple
+    marginBottom: 10,
+    fontStyle: 'italic',
+    textAlign: 'center',
   },
 });
 
