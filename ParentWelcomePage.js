@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LineChart, PieChart } from 'react-native-chart-kit';
+import { LineChart } from 'react-native-chart-kit';
 import moment from 'moment';
 
 const screenWidth = Dimensions.get('window').width;
@@ -160,6 +160,36 @@ const ParentWelcomePage = () => {
 
   const userData = filterSleepData(selectedUser, selectedTimeFrame);
 
+  const calculateAverages = (data) => {
+    if (data.length === 0) return {};
+
+    const total = data.length;
+    const totals = data.reduce((acc, entry) => {
+      acc.totalSleep += parseFloat(entry.totalSleep || 0);
+      acc.remSleep += parseFloat(entry.remSleep || 0);
+      acc.coreSleep += parseFloat(entry.coreSleep || 0);
+      acc.deepSleep += parseFloat(entry.deepSleep || 0);
+      acc.awakeTime += parseFloat(entry.awakeTime || 0);
+      return acc;
+    }, {
+      totalSleep: 0,
+      remSleep: 0,
+      coreSleep: 0,
+      deepSleep: 0,
+      awakeTime: 0,
+    });
+
+    return {
+      totalSleep: (totals.totalSleep / total).toFixed(1),
+      remSleep: (totals.remSleep / total).toFixed(1),
+      coreSleep: (totals.coreSleep / total).toFixed(1),
+      deepSleep: (totals.deepSleep / total).toFixed(1),
+      awakeTime: (totals.awakeTime / total).toFixed(1),
+    };
+  };
+
+  const averages = calculateAverages(userData);
+
   const generateLineChartData = (data, metric) => {
     const labels = [];
     const values = [];
@@ -175,25 +205,6 @@ const ParentWelcomePage = () => {
       labels,
       datasets: [{ data: values }],
     };
-  };
-
-  const generatePieChartData = (data) => {
-    if (data.length === 0) return [];
-
-    const totalRem = data.reduce((acc, entry) => acc + parseFloat(entry.remSleep || 0), 0);
-    const totalCore = data.reduce((acc, entry) => acc + parseFloat(entry.coreSleep || 0), 0);
-    const totalDeep = data.reduce((acc, entry) => acc + parseFloat(entry.deepSleep || 0), 0);
-    const entryCount = data.length;
-
-    const avgRem = entryCount > 0 ? totalRem / entryCount : 0;
-    const avgCore = entryCount > 0 ? totalCore / entryCount : 0;
-    const avgDeep = entryCount > 0 ? totalDeep / entryCount : 0;
-
-    return [
-      { name: `REM Sleep (${avgRem.toFixed(1)} hours)`, sleepType: avgRem, color: '#800080', legendFontColor: '#7F7F7F', legendFontSize: 15 },
-      { name: `Core Sleep (${avgCore.toFixed(1)} hours)`, sleepType: avgCore, color: '#C0C0C0', legendFontColor: '#7F7F7F', legendFontSize: 15 },
-      { name: `Deep Sleep (${avgDeep.toFixed(1)} hours)`, sleepType: avgDeep, color: '#D8BFD8', legendFontColor: '#7F7F7F', legendFontSize: 15 },
-    ];
   };
 
   const renderSleepTips = () => {
@@ -213,43 +224,51 @@ const ParentWelcomePage = () => {
     };
 
     const selectedAdvice = selectedUser === 'parent' ? sleepAdvice.adult : sleepAdvice.child;
-    const tips = [];
-
-    // Total Sleep Tips
-    if (parseFloat(totalSleep) < 7 && selectedUser === 'parent') {
-      tips.push(<Text key="totalSleepTip" style={styles.tipText}>You are undersleeping. {selectedAdvice.totalSleep.advice}</Text>);
-    } else if (parseFloat(totalSleep) < 9 && selectedUser === 'child') {
-      tips.push(<Text key="totalSleepTip" style={styles.tipText}>You are undersleeping. {selectedAdvice.totalSleep.advice}</Text>);
-    }
-
-    // REM Sleep Tips
-    if (parseFloat(remSleep) < 1.5 && selectedUser === 'parent') {
-      tips.push(<Text key="remSleepTip" style={styles.tipText}>You are undersleeping in REM sleep. {selectedAdvice.remSleep.advice}</Text>);
-    } else if (parseFloat(remSleep) < 1.5 && selectedUser === 'child') {
-      tips.push(<Text key="remSleepTip" style={styles.tipText}>You are undersleeping in REM sleep. {selectedAdvice.remSleep.advice}</Text>);
-    }
-
-    // Deep Sleep Tips
-    if (parseFloat(deepSleep) < 1.5 && selectedUser === 'parent') {
-      tips.push(<Text key="deepSleepTip" style={styles.tipText}>You are undersleeping in deep sleep. {selectedAdvice.deepSleep.advice}</Text>);
-    } else if (parseFloat(deepSleep) < 2 && selectedUser === 'child') {
-      tips.push(<Text key="deepSleepTip" style={styles.tipText}>You are undersleeping in deep sleep. {selectedAdvice.deepSleep.advice}</Text>);
-    }
-
-    // Awake Time Tips
-    if (parseFloat(awakeTime) > 1 && selectedUser === 'parent') {
-      tips.push(<Text key="awakeTimeTip" style={styles.tipText}>Your awake time is too high. {selectedAdvice.awakeTime.advice}</Text>);
-    } else if (parseFloat(awakeTime) > 1 && selectedUser === 'child') {
-      tips.push(<Text key="awakeTimeTip" style={styles.tipText}>Your awake time is too high. {selectedAdvice.awakeTime.advice}</Text>);
-    }
 
     return (
       <View style={styles.tipsContainer}>
         <Text style={styles.tipsTitle}>Sleep Tips</Text>
-        {tips.length === 0 ? (
-          <Text style={styles.tipText}>You're doing well! Keep up the good sleep habits.</Text>
-        ) : (
-          tips
+        
+        {/* Display Average Metrics */}
+        <View style={styles.averageContainer}>
+          <Text style={styles.metricLabel}>Average Total Sleep: <Text style={styles.metricValue}>{averages.totalSleep} hours</Text></Text>
+          <Text style={styles.metricLabel}>Average REM Sleep: <Text style={styles.metricValue}>{averages.remSleep} hours</Text></Text>
+          <Text style={styles.metricLabel}>Average Core Sleep: <Text style={styles.metricValue}>{averages.coreSleep} hours</Text></Text>
+          <Text style={styles.metricLabel}>Average Deep Sleep: <Text style={styles.metricValue}>{averages.deepSleep} hours</Text></Text>
+          <Text style={styles.metricLabel}>Average Awake Time: <Text style={styles.metricValue}>{averages.awakeTime} hours</Text></Text>
+        </View>
+
+        {/* Tips Based on Averages */}
+        {/* Total Sleep Tips */}
+        {parseFloat(averages.totalSleep) < 7 && selectedUser === 'parent' && (
+          <Text style={styles.tipText}>You are undersleeping. {selectedAdvice.totalSleep.advice}</Text>
+        )}
+        {parseFloat(averages.totalSleep) < 9 && selectedUser === 'child' && (
+          <Text style={styles.tipText}>You are undersleeping. {selectedAdvice.totalSleep.advice}</Text>
+        )}
+
+        {/* REM Sleep Tips */}
+        {parseFloat(averages.remSleep) < 1.5 && selectedUser === 'parent' && (
+          <Text style={styles.tipText}>You are undersleeping in REM sleep. {selectedAdvice.remSleep.advice}</Text>
+        )}
+        {parseFloat(averages.remSleep) < 1.5 && selectedUser === 'child' && (
+          <Text style={styles.tipText}>You are undersleeping in REM sleep. {selectedAdvice.remSleep.advice}</Text>
+        )}
+
+        {/* Deep Sleep Tips */}
+        {parseFloat(averages.deepSleep) < 1.5 && selectedUser === 'parent' && (
+          <Text style={styles.tipText}>You are undersleeping in deep sleep. {selectedAdvice.deepSleep.advice}</Text>
+        )}
+        {parseFloat(averages.deepSleep) < 2 && selectedUser === 'child' && (
+          <Text style={styles.tipText}>You are undersleeping in deep sleep. {selectedAdvice.deepSleep.advice}</Text>
+        )}
+
+        {/* Awake Time Tips */}
+        {parseFloat(averages.awakeTime) > 1 && selectedUser === 'parent' && (
+          <Text style={styles.tipText}>Your awake time is too high. {selectedAdvice.awakeTime.advice}</Text>
+        )}
+        {parseFloat(averages.awakeTime) > 1 && selectedUser === 'child' && (
+          <Text style={styles.tipText}>Your awake time is too high. {selectedAdvice.awakeTime.advice}</Text>
         )}
       </View>
     );
@@ -312,23 +331,6 @@ const ParentWelcomePage = () => {
       <TouchableOpacity style={styles.addSleepButton} onPress={() => setModalVisible(true)}>
         <Text style={styles.addSleepButtonText}>+ Add Sleep</Text>
       </TouchableOpacity>
-
-      {/* Pie Chart for Sleep Types */}
-      {userData.length > 0 && (
-        <>
-          <Text style={styles.chartTitle}>Sleep Breakdown</Text>
-          <PieChart
-            data={generatePieChartData(userData)}
-            width={screenWidth - 40}
-            height={220}
-            chartConfig={styles.chartConfig}
-            accessor="sleepType"
-            backgroundColor="transparent"
-            paddingLeft="15"
-            absolute
-          />
-        </>
-      )}
 
       {/* Line Charts for Sleep Metrics */}
       {userData.length > 0 && (
@@ -419,6 +421,7 @@ const ParentWelcomePage = () => {
               placeholder="Day (YYYY-MM-DD)"
               value={day}
               onChangeText={setDay}
+              placeholderTextColor="#800080" // Purple placeholder text
             />
 
             <TextInput
@@ -427,6 +430,7 @@ const ParentWelcomePage = () => {
               placeholder="Total Sleep (hours)"
               value={totalSleep}
               onChangeText={setTotalSleep}
+              placeholderTextColor="#800080" // Purple placeholder text
             />
 
             <TextInput
@@ -435,6 +439,7 @@ const ParentWelcomePage = () => {
               placeholder="REM Sleep (hours)"
               value={remSleep}
               onChangeText={setRemSleep}
+              placeholderTextColor="#800080" // Purple placeholder text
             />
 
             <TextInput
@@ -443,6 +448,7 @@ const ParentWelcomePage = () => {
               placeholder="Core Sleep (hours)"
               value={coreSleep}
               onChangeText={setCoreSleep}
+              placeholderTextColor="#800080" // Purple placeholder text
             />
 
             <TextInput
@@ -451,6 +457,7 @@ const ParentWelcomePage = () => {
               placeholder="Deep Sleep (hours)"
               value={deepSleep}
               onChangeText={setDeepSleep}
+              placeholderTextColor="#800080" // Purple placeholder text
             />
 
             <TextInput
@@ -459,6 +466,7 @@ const ParentWelcomePage = () => {
               placeholder="Awake Time (hours)"
               value={awakeTime}
               onChangeText={setAwakeTime}
+              placeholderTextColor="#800080" // Purple placeholder text
             />
 
             <TouchableOpacity style={styles.modalButton} onPress={handleAddOrEditSleep}>
@@ -659,6 +667,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#800080',
     marginBottom: 10,
+  },
+  averageContainer: {
+    marginBottom: 10,
+  },
+  metricLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#36454F',
+  },
+  metricValue: {
+    fontWeight: 'normal',
+    color: '#800080',
   },
   tipText: {
     fontSize: 14,

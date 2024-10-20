@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage'; // Import 
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [smsCode, setSmsCode] = useState('');
+  const [emailCode, setEmailCode] = useState(''); // Email verification code
   const [username, setUsername] = useState(''); // Used for child login to store parent email
   const [isCodeSent, setIsCodeSent] = useState(false);
   const [userRole, setUserRole] = useState(null);
@@ -56,8 +56,11 @@ const Login = ({ navigation }) => {
       if (email && password) {
         const isValid = await checkParentCredentials();
         if (isValid) {
-          Alert.alert("SMS code sent to your phone.");
+          Alert.alert("Email code sent to your email.");
           setIsCodeSent(true);
+          // Here, you would normally send the email code
+          // Simulate sending an email code (you can replace it with your actual email sending logic)
+          console.log("Email code sent: 1234"); // Simulate sending code
         } else {
           Alert.alert("Invalid email or password.");
         }
@@ -68,8 +71,10 @@ const Login = ({ navigation }) => {
       if (username) {
         const isParentEmailValid = await verifyParentEmailForChild();
         if (isParentEmailValid) {
-          Alert.alert("SMS code sent to parent's phone for approval.");
+          Alert.alert("Email code sent to parent's email for approval.");
           setIsCodeSent(true);
+          // Simulate sending an email code
+          console.log("Email code sent to parent: 1234"); // Simulate sending code
         } else {
           Alert.alert("Invalid parent email. Please try again.");
         }
@@ -81,9 +86,9 @@ const Login = ({ navigation }) => {
 
   // Function to verify parent code
   const verifyCodeParent = () => {
-    if (smsCode === '1234') {
+    if (emailCode === '1234') { // Simulated code for verification
       setIsApproved(true);
-      Alert.alert("Parent SMS verification successful! You are logged in.");
+      Alert.alert("Parent email verification successful! You are logged in.");
       navigation.navigate('ParentWelcomePage'); // Navigate to ParentWelcomePage for parent
     } else {
       Alert.alert("Invalid code. Please try again.");
@@ -92,9 +97,9 @@ const Login = ({ navigation }) => {
 
   // Function to verify child code
   const verifyCodeChild = () => {
-    if (smsCode === '1234') {
+    if (emailCode === '1234') { // Simulated code for verification
       setIsApproved(true);
-      Alert.alert("Child SMS verification successful! You are logged in.");
+      Alert.alert("Child email verification successful! You are logged in.");
       const sleepData = { totalHours: 7 }; // Replace with actual sleep data logic
       navigation.navigate('GameWelcomeScreen', { sleepData }); // Navigate to GameWelcomeScreen for child
     } else {
@@ -104,9 +109,9 @@ const Login = ({ navigation }) => {
 
   const getDescription = () => {
     if (userRole === 'parent') {
-      return 'As a parent, you can view sleep data and learn healthy sleeping habits. You can log in using your email and password. You will receive an SMS code to verify your login.';
+      return 'As a parent, you can view sleep data and learn healthy sleeping habits. You can log in using your email and password. You will receive an email code to verify your login.';
     } else if (userRole === 'child') {
-      return 'Your child can learn the benefits of consistent sleep through our interactive game. Enter your parent email to send a code for approval. You will need the SMS code to complete the login process.';
+      return 'Your child can learn the benefits of consistent sleep through our interactive game. Enter your parent email to send a code for approval. You will need the email code to complete the login process.';
     }
     return '';
   };
@@ -158,10 +163,10 @@ const Login = ({ navigation }) => {
             <>
               <TextInput
                 style={styles.input}
-                placeholder="Enter SMS Code"
-                value={smsCode}
-                onChangeText={setSmsCode}
-                keyboardType="numeric" // Numeric keyboard for SMS code input
+                placeholder="Enter Email Code"
+                value={emailCode}
+                onChangeText={setEmailCode}
+                keyboardType="numeric" // Numeric keyboard for email code input
               />
               <TouchableOpacity onPress={verifyCodeParent} style={styles.verifyButton}>
                 <Text style={styles.verifyButtonText}>Verify Code</Text>
@@ -187,10 +192,10 @@ const Login = ({ navigation }) => {
             <>
               <TextInput
                 style={styles.input}
-                placeholder="Enter SMS Code"
-                value={smsCode}
-                onChangeText={setSmsCode}
-                keyboardType="numeric" // Numeric keyboard for SMS code input
+                placeholder="Enter Email Code"
+                value={emailCode}
+                onChangeText={setEmailCode}
+                keyboardType="numeric" // Numeric keyboard for email code input
               />
               <TouchableOpacity onPress={verifyCodeChild} style={styles.verifyButton}>
                 <Text style={styles.verifyButtonText}>Verify Code</Text>
@@ -256,14 +261,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '40%',
   },
-  loginButton: {
-    backgroundColor: '#800080',  // Same button style as App.js
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    borderRadius: 30,  // Pill-shaped login button from App.js
-    alignItems: 'center',
-    marginTop: 20,
-  },
   verifyButton: {
     backgroundColor: '#28353B',  // Slightly different color for verify button
     paddingVertical: 15,
@@ -317,4 +314,3 @@ const styles = StyleSheet.create({
 });
 
 export default Login;
-

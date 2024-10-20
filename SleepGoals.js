@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
 
 const CustomCheckbox = ({ value, onValueChange, label }) => {
   return (
@@ -39,13 +40,40 @@ const SleepGoals = ({ navigation }) => {
     }));
   };
 
-  const handleSave = () => {
-    Alert.alert("Your preferences are saved!", "Now login to explore the app!", [
-      {
-        text: "OK",
-        onPress: () => navigation.navigate('Login'),
-      },
-    ]);
+  const handleSave = async () => {
+    try {
+      // Retrieve user data from AsyncStorage
+      const storedUser = await AsyncStorage.getItem('user');
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        
+        // Save sleep questionnaire responses
+        const sleepData = {
+          isLightSleeper,
+          troubleFallingAsleep,
+          wakesUpInNight,
+          wakesUpWellRested,
+        };
+
+        // Combine user data with sleep data
+        const updatedUserData = {
+          ...parsedUser,
+          sleepData, // Add the sleep data to the user data
+        };
+
+        // Store updated user data back to AsyncStorage
+        await AsyncStorage.setItem('user', JSON.stringify(updatedUserData));
+
+        Alert.alert("Your preferences are saved!", "Now login to explore the app!", [
+          {
+            text: "OK",
+            onPress: () => navigation.navigate('Login'),
+          },
+        ]);
+      }
+    } catch (err) {
+      Alert.alert("Error saving sleep data: ", err.message);
+    }
   };
 
   const renderYesNoSelector = (label, value, onChange) => (

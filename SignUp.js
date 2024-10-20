@@ -6,7 +6,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage'; // Import 
 
 const SignUp = ({ navigation }) => {
   const [email, setEmail] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isChecked, setIsChecked] = useState(false); // For the Terms and Conditions checkbox
@@ -14,12 +13,12 @@ const SignUp = ({ navigation }) => {
   const [termsRead, setTermsRead] = useState(false); // State to track if terms were read
 
   const validateEmail = (email) => {
-    // Ensure email contains '@' and '.com'
-    return email.includes('@') && (email.includes('.com')||email.includes('.edu'));
+    // Ensure email contains '@' and '.com' or '.edu'
+    return email.includes('@') && (email.includes('.com') || email.includes('.edu'));
   };
 
   const handleSignUp = async () => {
-    if (!email || !phoneNumber || !password || !confirmPassword) {
+    if (!email || !password || !confirmPassword) {
       Alert.alert("All fields are required.");
       return;
     }
@@ -44,7 +43,6 @@ const SignUp = ({ navigation }) => {
       // Store user data in AsyncStorage after sign-up
       const userData = {
         email,
-        phoneNumber,
         password, // In a real app, passwords should be encrypted.
       };
       await AsyncStorage.setItem('user', JSON.stringify(userData));
@@ -81,15 +79,6 @@ const SignUp = ({ navigation }) => {
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
-        placeholderTextColor="#36454F"
-      />
-
-      <TextInput
-        style={styles.input}
-        placeholder="Phone Number"
-        value={phoneNumber}
-        onChangeText={setPhoneNumber}
-        keyboardType="phone-pad"
         placeholderTextColor="#36454F"
       />
 
@@ -142,7 +131,7 @@ const SignUp = ({ navigation }) => {
             <ScrollView>
               <Text style={styles.modalTitle}>Terms and Conditions</Text>
               <Text style={styles.modalText}>
-              Last Updated: 8/27/2024 {"\n"}
+                Last Updated: 8/27/2024 {"\n"}
                 {"\n"}
                 1. Introduction{"\n"}
                 Welcome to Sleep Sync (the "App"). The App is designed to help parents and children aged 6-12 track and improve their sleep patterns. By using the App, you agree to comply with and be bound by these Terms and Conditions (the "Terms"). Please read them carefully before using the App.{"\n"}
