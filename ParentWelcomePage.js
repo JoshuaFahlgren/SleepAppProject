@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LineChart } from 'react-native-chart-kit';
+import { LineChart, PieChart } from 'react-native-chart-kit';
 import moment from 'moment';
 
 const screenWidth = Dimensions.get('window').width;
@@ -28,6 +28,7 @@ const ParentWelcomePage = () => {
   const [coreSleep, setCoreSleep] = useState('');
   const [deepSleep, setDeepSleep] = useState('');
   const [awakeTime, setAwakeTime] = useState('');
+  const [dayPlaceholder, setDayPlaceholder] = useState('YYYYMMDD');
 
   useEffect(() => {
     const fetchSleepData = async () => {
@@ -140,18 +141,27 @@ const ParentWelcomePage = () => {
 
   const filterSleepData = (userType, timeframe) => {
     const data = sleepData[userType] || [];
-    const today = moment();
+    const today = moment().startOf('day');
+    const yesterday = moment().subtract(1, 'days').startOf('day');
     let filteredData = [];
 
     if (timeframe === 'lastNight') {
-      filteredData = data.filter(entry => moment(entry.day).isSame(today, 'day'));
+      filteredData = data.filter(entry => 
+        moment(entry.day, 'YYYY-MM-DD').isSame(yesterday, 'day')
+      );
+      // If no data for yesterday, check today (in case they logged early morning)
+      if (filteredData.length === 0) {
+        filteredData = data.filter(entry => 
+          moment(entry.day, 'YYYY-MM-DD').isSame(today, 'day')
+        );
+      }
     } else if (timeframe === 'week') {
       filteredData = data.filter(entry =>
-        moment(entry.day).isBetween(today.clone().subtract(7, 'days'), today, null, '[]')
+        moment(entry.day, 'YYYY-MM-DD').isBetween(today.clone().subtract(7, 'days'), today, null, '[]')
       );
     } else if (timeframe === 'month') {
       filteredData = data.filter(entry =>
-        moment(entry.day).isBetween(today.clone().subtract(30, 'days'), today, null, '[]')
+        moment(entry.day, 'YYYY-MM-DD').isBetween(today.clone().subtract(30, 'days'), today, null, '[]')
       );
     }
 
@@ -161,7 +171,7 @@ const ParentWelcomePage = () => {
   const userData = filterSleepData(selectedUser, selectedTimeFrame);
 
   const calculateAverages = (data) => {
-    if (data.length === 0) return {};
+    if (!data || data.length === 0) return null;
 
     const total = data.length;
     const totals = data.reduce((acc, entry) => {
@@ -191,12 +201,19 @@ const ParentWelcomePage = () => {
   const averages = calculateAverages(userData);
 
   const generateLineChartData = (data, metric) => {
+    if (data.length === 0) {
+      return {
+        labels: [],
+        datasets: [{ data: [] }]
+      };
+    }
+
     const labels = [];
     const values = [];
     data.forEach((entry) => {
       const value = parseFloat(entry[metric] || 0);
       if (!isNaN(value)) {
-        labels.push(moment(entry.day).format('MMM D'));
+        labels.push(moment(entry.day, 'YYYY-MM-DD').format('MMM D'));
         values.push(value);
       }
     });
@@ -207,7 +224,26 @@ const ParentWelcomePage = () => {
     };
   };
 
+  const chartConfig = {
+    backgroundGradientFrom: "#ffffff",
+    backgroundGradientTo: "#ffffff",
+    color: (opacity = 1) => `rgba(128, 0, 128, ${opacity})`, // Purple color
+    strokeWidth: 2, // optional, default 3
+    barPercentage: 0.5,
+    useShadowColorFromDataset: false // optional
+  };
+
   const renderSleepTips = () => {
+    if (!averages) {
+      return (
+        <View style={styles.tipsContainer}>
+          <Text style={styles.noDataText}>
+            No sleep data available for the selected time frame.
+          </Text>
+        </View>
+      );
+    }
+
     const sleepAdvice = {
       adult: {
         totalSleep: { range: '7-9 hours', advice: 'Aim for at least 7 hours of total sleep. Consider adjusting your schedule for more rest.' },
@@ -225,6 +261,37 @@ const ParentWelcomePage = () => {
 
     const selectedAdvice = selectedUser === 'parent' ? sleepAdvice.adult : sleepAdvice.child;
 
+    const pieChartData = [
+      {
+        name: 'REM',
+        population: parseFloat(averages.remSleep),
+        color: '#8A2BE2', // BlueViolet
+        legendFontColor: '#7F7F7F',
+        legendFontSize: 12,
+      },
+      {
+        name: 'Core',
+        population: parseFloat(averages.coreSleep),
+        color: '#9370DB', // MediumPurple
+        legendFontColor: '#7F7F7F',
+        legendFontSize: 12,
+      },
+      {
+        name: 'Deep',
+        population: parseFloat(averages.deepSleep),
+        color: '#BA55D3', // MediumOrchid
+        legendFontColor: '#7F7F7F',
+        legendFontSize: 12,
+      },
+      {
+        name: 'Awake',
+        population: parseFloat(averages.awakeTime),
+        color: '#DDA0DD', // Plum
+        legendFontColor: '#7F7F7F',
+        legendFontSize: 12,
+      },
+    ];
+
     return (
       <View style={styles.tipsContainer}>
         <Text style={styles.tipsTitle}>Sleep Tips</Text>
@@ -237,6 +304,19 @@ const ParentWelcomePage = () => {
           <Text style={styles.metricLabel}>Average Deep Sleep: <Text style={styles.metricValue}>{averages.deepSleep} hours</Text></Text>
           <Text style={styles.metricLabel}>Average Awake Time: <Text style={styles.metricValue}>{averages.awakeTime} hours</Text></Text>
         </View>
+
+        {/* Pie Chart */}
+        <Text style={styles.chartTitle}>Sleep Composition</Text>
+        <PieChart
+          data={pieChartData}
+          width={screenWidth - 60}
+          height={200}
+          chartConfig={chartConfig}
+          accessor="population"
+          backgroundColor="transparent"
+          paddingLeft="15"
+          absolute
+        />
 
         {/* Tips Based on Averages */}
         {/* Total Sleep Tips */}
@@ -274,10 +354,34 @@ const ParentWelcomePage = () => {
     );
   };
 
+  const handleDayChange = (text) => {
+    // Remove any non-digit characters
+    const numericText = text.replace(/[^0-9]/g, '');
+    
+    // Limit the input to 8 digits
+    const truncatedText = numericText.slice(0, 8);
+    
+    setDay(truncatedText);
+    
+    // Update placeholder
+    if (truncatedText.length > 0) {
+      setDayPlaceholder('');
+    } else {
+      setDayPlaceholder('YYYYMMDD');
+    }
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {/* Page Title */}
-      <Text style={styles.pageTitle}>View Sleep</Text>
+      {/* Header Section */}
+      <View style={styles.headerContainer}>
+        <View style={styles.titleContainer}>
+          <Text style={styles.pageTitle}>View Sleep</Text>
+        </View>
+        <TouchableOpacity style={styles.addSleepButton} onPress={() => setModalVisible(true)}>
+          <Text style={styles.addSleepButtonText}>+ Add Sleep</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Toggle Buttons for Parent/Child */}
       <View style={styles.toggleButtonsContainer}>
@@ -327,20 +431,15 @@ const ParentWelcomePage = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Add Sleep Data Button */}
-      <TouchableOpacity style={styles.addSleepButton} onPress={() => setModalVisible(true)}>
-        <Text style={styles.addSleepButtonText}>+ Add Sleep</Text>
-      </TouchableOpacity>
-
       {/* Line Charts for Sleep Metrics */}
-      {userData.length > 0 && (
+      {userData.length > 0 ? (
         <>
           <Text style={styles.chartTitle}>Total Sleep Over Time</Text>
           <LineChart
             data={generateLineChartData(userData, 'totalSleep')}
             width={screenWidth - 40}
             height={220}
-            chartConfig={styles.chartConfig}
+            chartConfig={chartConfig}
             bezier
           />
 
@@ -349,7 +448,7 @@ const ParentWelcomePage = () => {
             data={generateLineChartData(userData, 'awakeTime')}
             width={screenWidth - 40}
             height={220}
-            chartConfig={styles.chartConfig}
+            chartConfig={chartConfig}
             bezier
           />
 
@@ -358,7 +457,7 @@ const ParentWelcomePage = () => {
             data={generateLineChartData(userData, 'remSleep')}
             width={screenWidth - 40}
             height={220}
-            chartConfig={styles.chartConfig}
+            chartConfig={chartConfig}
             bezier
           />
 
@@ -367,7 +466,7 @@ const ParentWelcomePage = () => {
             data={generateLineChartData(userData, 'coreSleep')}
             width={screenWidth - 40}
             height={220}
-            chartConfig={styles.chartConfig}
+            chartConfig={chartConfig}
             bezier
           />
 
@@ -376,10 +475,16 @@ const ParentWelcomePage = () => {
             data={generateLineChartData(userData, 'deepSleep')}
             width={screenWidth - 40}
             height={220}
-            chartConfig={styles.chartConfig}
+            chartConfig={chartConfig}
             bezier
           />
         </>
+      ) : (
+        <Text style={styles.noDataText}>
+          {selectedTimeFrame === 'lastNight' 
+            ? `No sleep data available for last night for the ${selectedUser}.` 
+            : `No data available for the selected time frame for the ${selectedUser}.`}
+        </Text>
       )}
 
       {/* Display Sleep Data Table with Edit/Delete Buttons */}
@@ -417,11 +522,12 @@ const ParentWelcomePage = () => {
 
             <TextInput
               style={styles.input}
-              keyboardType="default"
-              placeholder="Day (YYYY-MM-DD)"
+              keyboardType="numeric"
+              placeholder={dayPlaceholder}
               value={day}
-              onChangeText={setDay}
-              placeholderTextColor="#800080" // Purple placeholder text
+              onChangeText={handleDayChange}
+              placeholderTextColor="#800080"
+              maxLength={8}
             />
 
             <TextInput
@@ -489,13 +595,32 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     backgroundColor: '#F4F7F8',
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  titleContainer: {
+    flex: 1,
     alignItems: 'center',
   },
   pageTitle: {
     fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 20,
     color: '#800080',
+  },
+  addSleepButton: {
+    backgroundColor: '#800080',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 25, // Pill-shaped
+  },
+  addSleepButtonText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
   toggleButtonsContainer: {
     flexDirection: 'row',
@@ -536,41 +661,6 @@ const styles = StyleSheet.create({
     borderRadius: 25, // Pill-shaped
     alignItems: 'center',
     marginHorizontal: 5,
-  },
-  addSleepButton: {
-    backgroundColor: '#800080',
-    paddingVertical: 10,
-    paddingHorizontal: 25,
-    borderRadius: 25, // Pill-shaped
-    marginTop: 20,
-  },
-  addSleepButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  chartTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#36454F',
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  chartConfig: {
-    backgroundColor: '#F4F7F8',
-    backgroundGradientFrom: '#F4F7F8',
-    backgroundGradientTo: '#E0E0E0',
-    decimalPlaces: 1,
-    color: (opacity = 1) => `rgba(128, 0, 128, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(128, 0, 128, ${opacity})`,
-    style: {
-      borderRadius: 16,
-    },
-    propsForDots: {
-      r: '6',
-      strokeWidth: '2',
-      stroke: '#800080',
-    },
   },
   sleepDataContainer: {
     marginTop: 20,
@@ -684,6 +774,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#36454F',
     marginBottom: 5,
+  },
+  chartTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#800080',
+    marginTop: 20,
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  noDataText: {
+    fontSize: 16,
+    color: '#800080',
+    textAlign: 'center',
+    marginTop: 20,
+    marginBottom: 20,
   },
 });
 
