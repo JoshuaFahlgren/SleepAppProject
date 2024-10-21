@@ -405,13 +405,13 @@ const ParentWelcomePage = () => {
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Sleep Data</Text>
-          <ScrollView>
+          <ScrollView style={styles.sleepDataScrollView}>
             {sleepData[selectedUser].map((entry, index) => (
               <View key={index} style={styles.sleepDataRow}>
                 <Text style={styles.sleepDataText}>
                   {`Day: ${entry.day}, Total: ${entry.totalSleep}, REM: ${entry.remSleep}, Core: ${entry.coreSleep}, Deep: ${entry.deepSleep}, Awake: ${entry.awakeTime}`}
                 </Text>
-                <View style={styles.buttonContainer}>
+                <View style={styles.sleepDataButtonContainer}>
                   <TouchableOpacity
                     style={styles.editButton}
                     onPress={() => {
@@ -583,67 +583,71 @@ const ParentWelcomePage = () => {
               {editingIndex !== null ? 'Edit' : 'Add'} Sleep Data for {selectedUser === 'parent' ? 'Parent' : 'Child'}
             </Text>
 
-            <TextInput
-              style={styles.input}
-              keyboardType="numeric"
-              placeholder={dayPlaceholder}
-              value={day}
-              onChangeText={handleDayChange}
-              placeholderTextColor="#800080"
-              maxLength={8}
-            />
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                placeholder="YYYYMMDD"
+                value={day}
+                onChangeText={handleDayChange}
+                placeholderTextColor="#800080"
+                maxLength={8}
+              />
 
-            <TextInput
-              style={styles.input}
-              keyboardType="numeric"
-              placeholder="Total Sleep (hours)"
-              value={totalSleep}
-              onChangeText={setTotalSleep}
-              placeholderTextColor="#800080" // Purple placeholder text
-            />
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                placeholder="Total Sleep (hours)"
+                value={totalSleep}
+                onChangeText={setTotalSleep}
+                placeholderTextColor="#800080"
+              />
 
-            <TextInput
-              style={styles.input}
-              keyboardType="numeric"
-              placeholder="REM Sleep (hours)"
-              value={remSleep}
-              onChangeText={setRemSleep}
-              placeholderTextColor="#800080" // Purple placeholder text
-            />
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                placeholder="REM Sleep (hours)"
+                value={remSleep}
+                onChangeText={setRemSleep}
+                placeholderTextColor="#800080"
+              />
 
-            <TextInput
-              style={styles.input}
-              keyboardType="numeric"
-              placeholder="Core Sleep (hours)"
-              value={coreSleep}
-              onChangeText={setCoreSleep}
-              placeholderTextColor="#800080" // Purple placeholder text
-            />
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                placeholder="Core Sleep (hours)"
+                value={coreSleep}
+                onChangeText={setCoreSleep}
+                placeholderTextColor="#800080"
+              />
 
-            <TextInput
-              style={styles.input}
-              keyboardType="numeric"
-              placeholder="Deep Sleep (hours)"
-              value={deepSleep}
-              onChangeText={setDeepSleep}
-              placeholderTextColor="#800080" // Purple placeholder text
-            />
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                placeholder="Deep Sleep (hours)"
+                value={deepSleep}
+                onChangeText={setDeepSleep}
+                placeholderTextColor="#800080"
+              />
 
-            <TextInput
-              style={styles.input}
-              keyboardType="numeric"
-              placeholder="Awake Time (hours)"
-              value={awakeTime}
-              onChangeText={setAwakeTime}
-              placeholderTextColor="#800080" // Purple placeholder text
-            />
+              <TextInput
+                style={styles.input}
+                keyboardType="numeric"
+                placeholder="Awake Time (hours)"
+                value={awakeTime}
+                onChangeText={setAwakeTime}
+                placeholderTextColor="#800080"
+              />
+            </View>
 
-            <TouchableOpacity style={styles.modalButton} onPress={handleAddOrEditSleep}>
-              <Text style={styles.modalButtonText}>Submit</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>
-              <Text style={styles.modalButtonText}>Cancel</Text>
-            </TouchableOpacity>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalButton} onPress={handleAddOrEditSleep}>
+                <Text style={styles.modalButtonText}>Submit</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -781,39 +785,56 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
     backgroundColor: '#FFF',
+    borderRadius: 20,
     padding: 20,
-    marginHorizontal: 20,
-    borderRadius: 10,
+    width: '90%',
+    maxHeight: '90%',
     alignItems: 'center',
   },
   modalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: '#800080',
     marginBottom: 20,
+    textAlign: 'center',
   },
-  modalButton: {
-    backgroundColor: '#800080',
-    padding: 12,
-    marginTop: 10,
-    borderRadius: 25, // Pill-shaped
-  },
-  modalButtonText: {
-    color: '#FFF',
-    fontSize: 16,
+  inputContainer: {
+    width: '80%',
+    alignItems: 'center',
   },
   input: {
     borderWidth: 1,
     borderColor: '#800080',
-    borderRadius: 10,
-    padding: 10,
+    borderRadius: 25,
+    padding: 12,
     marginVertical: 10,
-    width: 250,
+    width: '100%',
     fontSize: 16,
     textAlign: 'center',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '80%',
+    marginTop: 20,
+  },
+  modalButton: {
+    backgroundColor: '#800080',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    flex: 0.45,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   tipsContainer: {
     marginTop: 20,
@@ -883,26 +904,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginBottom: 20,
   },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    backgroundColor: '#FFF',
-    borderRadius: 10,
-    padding: 20,
-    width: '90%',
-    maxHeight: '80%',
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#800080',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
   closeButton: {
     backgroundColor: '#800080',
     paddingVertical: 10,
@@ -922,6 +923,60 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontStyle: 'italic',
     textAlign: 'center',
+  },
+  sleepDataScrollView: {
+    width: '100%',
+    maxHeight: '70%',
+  },
+  sleepDataRow: {
+    backgroundColor: '#F0E6FA',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 10,
+  },
+  sleepDataText: {
+    fontSize: 14,
+    color: '#4A0E4E',
+    marginBottom: 10,
+  },
+  sleepDataButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  editButton: {
+    backgroundColor: '#800080',
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+  },
+  editButtonText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  deleteButton: {
+    backgroundColor: '#FF0000',
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+  },
+  deleteButtonText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  closeButton: {
+    backgroundColor: '#800080',
+    paddingVertical: 12,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    marginTop: 20,
+    alignSelf: 'center',
+  },
+  closeButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
