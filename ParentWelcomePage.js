@@ -53,13 +53,53 @@ const ParentWelcomePage = () => {
   }, []);
 
   const handleAddOrEditSleep = async () => {
+    // Validate all fields are filled
     if (!day || !totalSleep || !remSleep || !coreSleep || !deepSleep || !awakeTime) {
       Alert.alert('Please fill in all fields');
       return;
     }
 
+    // Convert values to numbers for validation
+    const totalSleepNum = parseFloat(totalSleep);
+    const remSleepNum = parseFloat(remSleep);
+    const coreSleepNum = parseFloat(coreSleep);
+    const deepSleepNum = parseFloat(deepSleep);
+    const awakeTimeNum = parseFloat(awakeTime);
+
+    // Validate sleep components don't exceed total sleep
+    const sumOfComponents = remSleepNum + coreSleepNum + deepSleepNum + awakeTimeNum;
+    if (Math.abs(sumOfComponents - totalSleepNum) > 0.1) { // Allow small rounding differences
+      Alert.alert('Invalid Sleep Data', 
+        'The sum of REM, Core, Deep sleep, and Awake time must equal the Total Sleep time.');
+      return;
+    }
+
+    // Format the day to ensure consistent comparison
+    const formattedDay = moment(day, 'YYYYMMDD').format('YYYYMMDD');
+
+    // Initialize updatedSleepData with existing data or empty arrays
+    const updatedSleepData = { ...sleepData };
+    if (!updatedSleepData[selectedUser]) {
+      updatedSleepData[selectedUser] = [];
+    }
+
+    // Check for existing data on the same date
+    const existingEntry = updatedSleepData[selectedUser].find((entry, index) => {
+      if (!entry) return false;
+      const entryDay = moment(entry.day, 'YYYYMMDD').format('YYYYMMDD');
+      return entryDay === formattedDay && index !== editingIndex;
+    });
+
+    if (existingEntry) {
+      Alert.alert(
+        'Date Conflict',
+        'Sleep data already exists for this date. Please choose a different date or edit the existing entry.'
+      );
+      return;
+    }
+
     const newSleepEntry = {
-      day,
+      day: formattedDay,
       totalSleep,
       remSleep,
       coreSleep,
@@ -67,13 +107,9 @@ const ParentWelcomePage = () => {
       awakeTime,
     };
 
-    const updatedSleepData = { ...sleepData };
-
     if (editingIndex !== null) {
-      // Update existing entry if in edit mode
       updatedSleepData[selectedUser][editingIndex] = newSleepEntry;
     } else {
-      // Add new entry if not in edit mode
       updatedSleepData[selectedUser] = [...updatedSleepData[selectedUser], newSleepEntry];
     }
 
@@ -82,7 +118,7 @@ const ParentWelcomePage = () => {
 
     setSleepData(updatedSleepData);
     setModalVisible(false);
-    setEditingIndex(null); // Reset editing state
+    setEditingIndex(null);
 
     try {
       const storedUser = await AsyncStorage.getItem('user');

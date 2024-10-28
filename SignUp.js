@@ -40,7 +40,17 @@ const SignUp = ({ navigation }) => {
     }
 
     try {
-      // Store user data in AsyncStorage after sign-up
+      // Check if email already exists
+      const existingUsers = await AsyncStorage.getAllKeys();
+      for (let key of existingUsers) {
+        const userData = JSON.parse(await AsyncStorage.getItem(key));
+        if (userData.email === email) {
+          Alert.alert("Account Already Exists", "An account with this email already exists. Please use a different email or sign in.");
+          return;
+        }
+      }
+
+      // If email doesn't exist, proceed with storing new user data
       const userData = {
         email,
         password, // In a real app, passwords should be encrypted.
