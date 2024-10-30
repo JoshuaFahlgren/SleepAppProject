@@ -1,15 +1,35 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert, Animated } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
 
 const CustomCheckbox = ({ value, onValueChange, label }) => {
+  const scaleValue = new Animated.Value(1);
+
+  const handlePress = () => {
+    Animated.sequence([
+      Animated.timing(scaleValue, {
+        toValue: 0.95,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleValue, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    onValueChange();
+  };
+
   return (
-    <TouchableOpacity style={styles.checkboxContainer} onPress={onValueChange}>
-      <View style={[styles.checkbox, value && styles.checkedCheckbox]}>
-        {value && <Text style={styles.checkmark}>✓</Text>}
-      </View>
-      <Text style={styles.label}>{label}</Text>
-    </TouchableOpacity>
+    <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
+      <TouchableOpacity style={styles.checkboxContainer} onPress={handlePress}>
+        <View style={[styles.checkbox, value && styles.checkedCheckbox]}>
+          {value && <Text style={styles.checkmark}>✓</Text>}
+        </View>
+        <Text style={styles.label}>{label}</Text>
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 
@@ -101,82 +121,82 @@ const SleepGoals = ({ navigation }) => {
       <Text style={styles.title}>Sleep Goals</Text>
 
       {/* Sleep Goals Section */}
-      <View style={styles.goalsContainer}>
-        <CustomCheckbox
-          value={goals.improveSleepQuality}
-          onValueChange={() => toggleGoal('improveSleepQuality')}
-          label="Improve Sleep Quality"
-        />
+      <View style={styles.card}>
+        <View style={styles.goalsContainer}>
+          <CustomCheckbox
+            value={goals.improveSleepQuality}
+            onValueChange={() => toggleGoal('improveSleepQuality')}
+            label="Improve Sleep Quality"
+          />
 
-        <CustomCheckbox
-          value={goals.learnHowISleep}
-          onValueChange={() => toggleGoal('learnHowISleep')}
-          label="Learn How I Sleep"
-        />
+          <CustomCheckbox
+            value={goals.learnHowISleep}
+            onValueChange={() => toggleGoal('learnHowISleep')}
+            label="Learn How I Sleep"
+          />
 
-        <CustomCheckbox
-          value={goals.increaseSleepDuration}
-          onValueChange={() => toggleGoal('increaseSleepDuration')}
-          label="Increase Sleep Duration"
-        />
+          <CustomCheckbox
+            value={goals.increaseSleepDuration}
+            onValueChange={() => toggleGoal('increaseSleepDuration')}
+            label="Increase Sleep Duration"
+          />
 
-        <CustomCheckbox
-          value={goals.consistentBedtime}
-          onValueChange={() => toggleGoal('consistentBedtime')}
-          label="Maintain a Consistent Bedtime"
-        />
+          <CustomCheckbox
+            value={goals.consistentBedtime}
+            onValueChange={() => toggleGoal('consistentBedtime')}
+            label="Maintain a Consistent Bedtime"
+          />
 
-        <CustomCheckbox
-          value={goals.reduceWakeUps}
-          onValueChange={() => toggleGoal('reduceWakeUps')}
-          label="Reduce Nighttime Wake-Ups"
-        />
+          <CustomCheckbox
+            value={goals.reduceWakeUps}
+            onValueChange={() => toggleGoal('reduceWakeUps')}
+            label="Reduce Nighttime Wake-Ups"
+          />
 
-        <CustomCheckbox
-          value={goals.betterRestfulness}
-          onValueChange={() => toggleGoal('betterRestfulness')}
-          label="Feel More Rested Upon Waking"
-        />
+          <CustomCheckbox
+            value={goals.betterRestfulness}
+            onValueChange={() => toggleGoal('betterRestfulness')}
+            label="Feel More Rested Upon Waking"
+          />
 
-        <CustomCheckbox
-          value={goals.betterSchoolPerformance}
-          onValueChange={() => toggleGoal('betterSchoolPerformance')}
-          label="Improve School Performance"
-        />
+          <CustomCheckbox
+            value={goals.betterSchoolPerformance}
+            onValueChange={() => toggleGoal('betterSchoolPerformance')}
+            label="Improve School Performance"
+          />
 
-        <CustomCheckbox
-          value={goals.consistentSleepRoutine}
-          onValueChange={() => toggleGoal('consistentSleepRoutine')}
-          label="Establish a Consistent Sleep Routine"
-        />
+          <CustomCheckbox
+            value={goals.consistentSleepRoutine}
+            onValueChange={() => toggleGoal('consistentSleepRoutine')}
+            label="Establish a Consistent Sleep Routine"
+          />
 
-        <CustomCheckbox
-          value={goals.fewerNightmares}
-          onValueChange={() => toggleGoal('fewerNightmares')}
-          label="Experience Fewer Nightmares"
-        />
-
-        <CustomCheckbox
-          value={goals.wakeUpEnergized}
-          onValueChange={() => toggleGoal('wakeUpEnergized')}
-          label="Wake Up Energized"
-        />
+          <CustomCheckbox
+            value={goals.wakeUpEnergized}
+            onValueChange={() => toggleGoal('wakeUpEnergized')}
+            label="Wake Up Energized"
+          />
+        </View>
       </View>
 
       {/* Sleep Questionnaire Section */}
       <Text style={styles.questionnaireTitle}>Sleep Questionnaire</Text>
       
-      <Text style={styles.subTitle}>Parent</Text>
-      {renderYesNoSelector("Are you a light sleeper?", isLightSleeper.parent, (value) => setIsLightSleeper({ ...isLightSleeper, parent: value }))}
-      {renderYesNoSelector("Do you have trouble falling asleep?", troubleFallingAsleep.parent, (value) => setTroubleFallingAsleep({ ...troubleFallingAsleep, parent: value }))}
-      {renderYesNoSelector("Do you wake up in the middle of the night?", wakesUpInNight.parent, (value) => setWakesUpInNight({ ...wakesUpInNight, parent: value }))}
-      {renderYesNoSelector("Do you wake up well rested?", wakesUpWellRested.parent, (value) => setWakesUpWellRested({ ...wakesUpWellRested, parent: value }))}
+      <View style={styles.card}>
+        <Text style={styles.subTitle}>Parent</Text>
+        {renderYesNoSelector("Are you a light sleeper?", isLightSleeper.parent, (value) => setIsLightSleeper({ ...isLightSleeper, parent: value }))}
+        {renderYesNoSelector("Do you have trouble falling asleep?", troubleFallingAsleep.parent, (value) => setTroubleFallingAsleep({ ...troubleFallingAsleep, parent: value }))}
+        {renderYesNoSelector("Do you wake up in the middle of the night?", wakesUpInNight.parent, (value) => setWakesUpInNight({ ...wakesUpInNight, parent: value }))}
+        {renderYesNoSelector("Do you wake up well rested?", wakesUpWellRested.parent, (value) => setWakesUpWellRested({ ...wakesUpWellRested, parent: value }))}
+      </View>
 
-      <Text style={styles.subTitle}>Child</Text>
-      {renderYesNoSelector("Is your child a light sleeper?", isLightSleeper.child, (value) => setIsLightSleeper({ ...isLightSleeper, child: value }))}
-      {renderYesNoSelector("Does your child have trouble falling asleep?", troubleFallingAsleep.child, (value) => setTroubleFallingAsleep({ ...troubleFallingAsleep, child: value }))}
-      {renderYesNoSelector("Does your child wake up in the middle of the night?", wakesUpInNight.child, (value) => setWakesUpInNight({ ...wakesUpInNight, child: value }))}
-      {renderYesNoSelector("Does your child wake up well rested?", wakesUpWellRested.child, (value) => setWakesUpWellRested({ ...wakesUpWellRested, child: value }))}
+      <View style={styles.card}>
+        <Text style={styles.subTitle}>Child</Text>
+        {renderYesNoSelector("Is your child a light sleeper?", isLightSleeper.child, (value) => setIsLightSleeper({ ...isLightSleeper, child: value }))}
+        {renderYesNoSelector("Does your child have trouble falling asleep?", troubleFallingAsleep.child, (value) => setTroubleFallingAsleep({ ...troubleFallingAsleep, child: value }))}
+        {renderYesNoSelector("Does your child wake up in the middle of the night?", wakesUpInNight.child, (value) => setWakesUpInNight({ ...wakesUpInNight, child: value }))}
+        {renderYesNoSelector("Does your child wake up well rested?", wakesUpWellRested.child, (value) => setWakesUpWellRested({ ...wakesUpWellRested, child: value }))}
+      </View>
 
       <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
         <Text style={styles.saveButtonText}>Save Goals</Text>
@@ -188,33 +208,45 @@ const SleepGoals = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: '#F4F7F8', // Light gray background
-    alignItems: 'flex-start', // Align items to the start (left)
+    backgroundColor: '#F4F7F8',
     padding: 20,
   },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
   title: {
-    color: '#800080', // Purple color for the title
-    fontSize: 26, // Increased font size for the title
-    fontWeight: '600',
-    textAlign: 'left',
-    marginBottom: 10,
-    letterSpacing: 1,
-    alignSelf: 'center', // Center the title horizontally
+    color: '#800080',
+    fontSize: 32,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 25,
+    letterSpacing: 0.5,
   },
   questionnaireTitle: {
-    color: '#800080', // Purple color for the questionnaire title
-    fontSize: 26, // Increased font size for the questionnaire title
+    color: '#800080',
+    fontSize: 28,
     fontWeight: '600',
-    textAlign: 'left',
-    marginBottom: 10,
-    letterSpacing: 1,
-    alignSelf: 'center', // Center the questionnaire title horizontally
+    textAlign: 'center',
+    marginTop: 20,
+    marginBottom: 25,
+    letterSpacing: 0.5,
   },
   subTitle: {
     color: '#800080',
-    fontSize: 22, // Slightly larger font size for subtitles
-    marginTop: 20,
-    marginBottom: 10,
+    fontSize: 24,
+    fontWeight: '600',
+    marginBottom: 15,
   },
   goalsContainer: {
     marginBottom: 20,
@@ -222,72 +254,84 @@ const styles = StyleSheet.create({
   checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
-    marginLeft: 10, // Add some left margin
+    marginBottom: 15,
+    paddingVertical: 5,
   },
   checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 4, // Square shape with rounded edges
+    width: 26,
+    height: 26,
+    borderRadius: 8,
     borderWidth: 2,
-    borderColor: '#36454F',
-    marginRight: 12,
+    borderColor: '#800080',
+    marginRight: 15,
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkedCheckbox: {
-    backgroundColor: '#36454F', // Filled square when selected
+    backgroundColor: '#800080',
   },
   checkmark: {
     color: '#FFF',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   label: {
     fontSize: 16,
-    color: '#36454F',
+    color: '#2C3E50',
+    fontWeight: '500',
   },
   selectorContainer: {
-    marginBottom: 20,
+    marginBottom: 15,
   },
   selectorLabel: {
     fontSize: 16,
-    color: '#36454F',
-    marginBottom: 5,
+    color: '#2C3E50',
+    marginBottom: 8,
+    fontWeight: '500',
   },
   selectorButtons: {
     flexDirection: 'row',
     justifyContent: 'space-around',
   },
   selectorButton: {
-    padding: 10,
-    borderRadius: 30, // Pill-shaped
-    width: '40%',
+    padding: 12,
+    borderRadius: 30,
+    width: '45%',
     alignItems: 'center',
   },
   selectedButton: {
-    backgroundColor: '#800080', // Selected button color
+    backgroundColor: '#800080',
   },
   unselectedButton: {
-    backgroundColor: '#E0E0E0', // Unselected button color
+    backgroundColor: '#E9ECEF',
   },
   selectorButtonText: {
     color: '#FFF',
     fontSize: 16,
+    fontWeight: '600',
   },
   saveButton: {
-    backgroundColor: '#800080', // Purple button color
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    borderRadius: 30, // Pill-shaped button
+    backgroundColor: '#800080',
+    paddingVertical: 16,
+    paddingHorizontal: 45,
+    borderRadius: 30,
     marginTop: 30,
     marginBottom: 40,
-    alignSelf: 'center', // Center the button horizontally
+    alignSelf: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   saveButtonText: {
     color: '#FFF',
     fontSize: 18,
-    fontWeight: '500',
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
 });
 

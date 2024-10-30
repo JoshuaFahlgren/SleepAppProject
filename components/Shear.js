@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 
 const Shear = (props) => {
   if (!props.body || !props.size) {
@@ -14,6 +14,35 @@ const Shear = (props) => {
   const bladeHeight = height * 0.65; // Blade part will be the top 65% of the shear
   const handleHeight = height * 0.35; // Handle part will be the bottom 35%
   const handleWidth = width * 0.55; // Slightly larger handles compared to blades
+
+  const styles = StyleSheet.create({
+    title: {
+      color: '#800080',
+      // ... rest of title styles
+    },
+    questionnaireTitle: {
+      color: '#800080',
+      // ... rest of questionnaireTitle styles
+    },
+    subTitle: {
+      color: '#800080',
+      // ... rest of subTitle styles
+    },
+    checkbox: {
+      borderColor: '#800080',
+      // ... rest of checkbox styles
+    },
+    checkedCheckbox: {
+      backgroundColor: '#800080',
+    },
+    selectedButton: {
+      backgroundColor: '#800080',
+    },
+    saveButton: {
+      backgroundColor: '#800080',
+      // ... rest of saveButton styles
+    },
+  });
 
   return (
     <>
