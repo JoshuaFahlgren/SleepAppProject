@@ -8,6 +8,22 @@ let fenceId = 0;
 let nextFenceTick = 1200; // Fixed interval for fence generation
 let maxSpeedReached = 7; // Track the maximum speed reached
 
+/**
+ * Physics system for the sheep jumping game
+ * Handles game mechanics including:
+ * - Sheep movement and jumping
+ * - Obstacle generation and movement
+ * - Collision detection
+ * - Speed management
+ * - Score tracking
+ * 
+ * @param {Object} entities - Game entities including sheep, ground, fences, etc.
+ * @param {Object} param1 - Game parameters including touches, time, and dispatch
+ * @param {Array} param1.touches - Touch inputs from the player
+ * @param {Object} param1.time - Time-related data including delta time
+ * @param {Function} param1.dispatch - Function to dispatch game events
+ * @returns {Object} Updated entities after physics calculations
+ */
 const Physics = (entities, { touches, time, dispatch }) => {
   let engine = entities.physics.engine;
   let world = entities.physics.world;
@@ -50,7 +66,11 @@ const Physics = (entities, { touches, time, dispatch }) => {
     entities.physics.jumpCount = 0;
   }
 
-  // Handle touch input for jumping
+  /**
+   * Handles sheep jumping mechanics
+   * Allows double jump (up to 2 jumps before touching ground)
+   * Triggered by touch input
+   */
   let jump = touches.find((t) => t.type === 'press' || t.type === 'long-press');
   if (jump) {
     const sheep = entities.sheep.body;

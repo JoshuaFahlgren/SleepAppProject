@@ -4,11 +4,24 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, StatusBar, 
 // List of possible 5-letter words (you can expand this list)
 const WORDS = ["sheep", "dream", "night", "herds", "sleep", "cloud"];
 
+/**
+ * Herdle component - A Wordle-like word guessing game
+ * Number of attempts is based on user's sleep data
+ * 
+ * @param {Object} route - Contains navigation route params
+ * @param {Object} navigation - Navigation object for screen transitions
+ */
 const Herdle = ({ route, navigation }) => {
   const { sleepData } = route.params || { sleepData: { totalHours: 8 } };
   
-  // Calculate attempts based on sleep, ensuring it's between 1 and 6
-  const calculateAttempts = (sleepHours) => Math.max(1, Math.min(Math.floor(sleepHours / 2) + 2, 6)); 
+  /**
+   * Calculates maximum attempts based on hours of sleep
+   * Formula: (sleep hours / 2) + 2, capped between 1 and 6 attempts
+   * 
+   * @param {number} sleepHours - Hours of sleep from previous night
+   * @returns {number} Number of allowed attempts
+   */
+  const calculateAttempts = (sleepHours) => Math.max(1, Math.min(Math.floor(sleepHours / 2) + 2, 6));
   const maxAttempts = calculateAttempts(sleepData.totalHours);
   
   const [word, setWord] = useState('');
@@ -19,12 +32,22 @@ const Herdle = ({ route, navigation }) => {
   const [win, setWin] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false); // State for showing instructions modal
 
-  // Select a random word when the game starts
+  /**
+   * Initializes game by selecting random word from WORDS array
+   * Runs once when component mounts
+   */
   useEffect(() => {
     const randomWord = WORDS[Math.floor(Math.random() * WORDS.length)];
     setWord(randomWord);
   }, []);
 
+  /**
+   * Processes player's guess attempt
+   * - Validates guess length
+   * - Updates guesses array
+   * - Checks for win/loss conditions
+   * - Updates game state accordingly
+   */
   const checkGuess = () => {
     if (currentGuess.length !== 5) {
       Alert.alert("Invalid Guess", "Guess must be a 5-letter word.");
@@ -48,12 +71,27 @@ const Herdle = ({ route, navigation }) => {
     setCurrentGuess('');
   };
 
+  /**
+   * Determines feedback color for each letter in guess
+   * - Green: Correct letter in correct position
+   * - Yellow: Correct letter in wrong position
+   * - Gray: Letter not in word
+   * 
+   * @param {string} letter - The guessed letter
+   * @param {number} index - Position of letter in word
+   * @returns {Object} Style object for letter feedback
+   */
   const getLetterFeedback = (letter, index) => {
     if (word[index] === letter) return styles.correctLetter; // Green for correct position
     if (word.includes(letter)) return styles.presentLetter; // Yellow for wrong position
     return styles.absentLetter; // Gray for incorrect
   };
 
+  /**
+   * Handles game completion
+   * Shows alert and navigates back to previous screen
+   * Used when player wins, loses, or wants to exit
+   */
   const handlePlayAgain = () => {
     Alert.alert("No More Plays", "You have used up your play. Come back after more sleep!");
     navigation.goBack();

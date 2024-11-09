@@ -3,6 +3,13 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, TouchableOpacity, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
 
+/**
+ * Login component handles both parent and child authentication flows
+ * Parents login with email/password while children login with parent's email
+ * Both flows require email verification codes for security
+ * 
+ * @param {object} navigation - Navigation prop for screen transitions
+ */
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -12,7 +19,12 @@ const Login = ({ navigation }) => {
   const [userRole, setUserRole] = useState(null);
   const [isApproved, setIsApproved] = useState(false);
 
-  // Function to check credentials for parent login
+  /**
+   * Validates parent login credentials against stored data in AsyncStorage
+   * Compares provided email and password with saved user information
+   * 
+   * @returns {Promise<boolean>} True if credentials match, false otherwise
+   */
   const checkParentCredentials = async () => {
     try {
       const storedUser = await AsyncStorage.getItem('user');
@@ -29,7 +41,12 @@ const Login = ({ navigation }) => {
     }
   };
 
-  // Function to verify if the parent email exists for child login
+  /**
+   * Checks if the provided parent email exists in AsyncStorage
+   * Used during child login to verify parent account exists
+   * 
+   * @returns {Promise<boolean>} True if parent email exists, false otherwise
+   */
   const verifyParentEmailForChild = async () => {
     try {
       const storedUser = await AsyncStorage.getItem('user');
@@ -46,6 +63,12 @@ const Login = ({ navigation }) => {
     }
   };
 
+  /**
+   * Handles the login button press for both parent and child flows
+   * For parents: Validates credentials and triggers email verification
+   * For children: Verifies parent email and requests approval code
+   * Shows appropriate alerts for various scenarios
+   */
   const handleLogin = async () => {
     if (!userRole) {
       Alert.alert("Please select whether you are a parent or a child.");
@@ -84,7 +107,11 @@ const Login = ({ navigation }) => {
     }
   };
 
-  // Function to verify parent code
+  /**
+   * Verifies the email code entered by parents
+   * Currently uses a hardcoded '1234' for demonstration
+   * On success, navigates to ParentWelcomePage
+   */
   const verifyCodeParent = () => {
     if (emailCode === '1234') { // Simulated code for verification
       setIsApproved(true);
@@ -95,7 +122,11 @@ const Login = ({ navigation }) => {
     }
   };
 
-  // Function to verify child code
+  /**
+   * Verifies the email code entered for child login
+   * Currently uses a hardcoded '1234' for demonstration
+   * On success, navigates to GameWelcomeScreen with mock sleep data
+   */
   const verifyCodeChild = () => {
     if (emailCode === '1234') { // Simulated code for verification
       setIsApproved(true);
@@ -107,6 +138,12 @@ const Login = ({ navigation }) => {
     }
   };
 
+  /**
+   * Returns appropriate description text based on selected user role
+   * Provides context and instructions for both parent and child login flows
+   * 
+   * @returns {string} Role-specific login instructions
+   */
   const getDescription = () => {
     if (userRole === 'parent') {
       return 'As a parent, you can view sleep data and learn healthy sleeping habits. You can log in using your email and password. You will receive an email code to verify your login.';
@@ -219,6 +256,16 @@ const Login = ({ navigation }) => {
   );
 };
 
+/**
+ * Styles for the Login component
+ * Defines the visual appearance of:
+ * - Container with light gray background
+ * - Purple-themed buttons and titles
+ * - Input fields with consistent styling
+ * - Role selection buttons
+ * - Description box for instructions
+ * - Back button with border
+ */
 const styles = StyleSheet.create({
   container: {
     flex: 1,

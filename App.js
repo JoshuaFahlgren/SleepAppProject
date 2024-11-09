@@ -13,6 +13,11 @@ import ParentWelcomePage from './ParentWelcomePage';
 
 const Stack = createNativeStackNavigator();
 
+/**
+ * Main App component that sets up the navigation structure for the entire application.
+ * Uses React Navigation's Stack Navigator to manage screen transitions.
+ * Sets "Home" as the initial screen and defines all available screen routes.
+ */
 export default function App() {
   return (
     <NavigationContainer>
@@ -30,6 +35,14 @@ export default function App() {
   );
 }
 
+/**
+ * HomeScreen component - The landing page of the application.
+ * Displays the app logo, title, and main navigation buttons.
+ * 
+ * @param {object} navigation - Navigation prop provided by React Navigation
+ *                             Used to handle screen transitions
+ * @returns {JSX.Element} A view containing the app's welcome screen with login/signup options
+ */
 function HomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
@@ -60,6 +73,17 @@ function HomeScreen({ navigation }) {
   );
 }
 
+/**
+ * Styles for the HomeScreen component
+ * Defines the visual appearance of:
+ * - Main container with light gray background
+ * - App logo image with rounded corners
+ * - Title text in purple with specific typography
+ * - Subtitle text with charcoal color
+ * - Button container for horizontal layout
+ * - Purple buttons with shadow effects
+ * - White button text
+ */
 const styles = StyleSheet.create({
   container: {
     flex: 1,

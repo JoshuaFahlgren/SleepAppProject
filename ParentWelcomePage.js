@@ -16,6 +16,10 @@ import moment from 'moment';
 
 const screenWidth = Dimensions.get('window').width;
 
+/**
+ * ParentWelcomePage component displays sleep data analysis and tracking interface
+ * Allows parents to view, add, edit, and analyze sleep patterns for both parent and child
+ */
 const ParentWelcomePage = () => {
   const [selectedUser, setSelectedUser] = useState('parent'); // Parent or Child
   const [selectedTimeFrame, setSelectedTimeFrame] = useState('lastNight'); // lastNight, week, or month
@@ -31,6 +35,10 @@ const ParentWelcomePage = () => {
   const [dayPlaceholder, setDayPlaceholder] = useState('YYYYMMDD');
   const [sleepDataModalVisible, setSleepDataModalVisible] = useState(false);
 
+  /**
+   * Fetches stored sleep data from AsyncStorage on component mount
+   * Retrieves data associated with the logged-in user's email
+   */
   useEffect(() => {
     const fetchSleepData = async () => {
       try {
@@ -52,6 +60,11 @@ const ParentWelcomePage = () => {
     fetchSleepData();
   }, []);
 
+  /**
+   * Handles adding new or editing existing sleep data entries
+   * Validates input fields and ensures sleep components sum to total sleep time
+   * Updates AsyncStorage with new data and sorts entries by date
+   */
   const handleAddOrEditSleep = async () => {
     // Validate all fields are filled
     if (!day || !totalSleep || !remSleep || !coreSleep || !deepSleep || !awakeTime) {
@@ -143,6 +156,10 @@ const ParentWelcomePage = () => {
     setAwakeTime('');
   };
 
+  /**
+   * Populates form fields with existing sleep entry data for editing
+   * @param {number} index - Array index of the sleep entry to edit
+   */
   const handleEditSleep = (index) => {
     const entry = sleepData[selectedUser][index];
     setDay(entry.day);
@@ -155,6 +172,10 @@ const ParentWelcomePage = () => {
     setModalVisible(true);
   };
 
+  /**
+   * Deletes a sleep entry and updates AsyncStorage
+   * @param {number} index - Array index of the sleep entry to delete
+   */
   const handleDeleteSleep = async (index) => {
     const updatedSleepData = { ...sleepData };
     updatedSleepData[selectedUser].splice(index, 1); // Remove the entry
@@ -176,6 +197,12 @@ const ParentWelcomePage = () => {
     }
   };
 
+  /**
+   * Filters sleep data based on selected user and timeframe
+   * @param {string} userType - 'parent' or 'child'
+   * @param {string} timeframe - 'lastNight', 'week', or 'month'
+   * @returns {Array} Filtered sleep data entries
+   */
   const filterSleepData = (userType, timeframe) => {
     const data = sleepData[userType] || [];
     const today = moment().startOf('day');
@@ -207,6 +234,11 @@ const ParentWelcomePage = () => {
 
   const userData = filterSleepData(selectedUser, selectedTimeFrame);
 
+  /**
+   * Calculates average sleep metrics from filtered data
+   * @param {Array} data - Array of sleep entries
+   * @returns {Object|null} Average metrics or null if no data
+   */
   const calculateAverages = (data) => {
     if (!data || data.length === 0) return null;
 
@@ -237,6 +269,12 @@ const ParentWelcomePage = () => {
 
   const averages = calculateAverages(userData);
 
+  /**
+   * Formats sleep data for line chart display
+   * @param {Array} data - Array of sleep entries
+   * @param {string} metric - Sleep metric to display (e.g., 'totalSleep')
+   * @returns {Object} Formatted data for chart component
+   */
   const generateLineChartData = (data, metric) => {
     if (data.length === 0) {
       return {
@@ -270,6 +308,11 @@ const ParentWelcomePage = () => {
     useShadowColorFromDataset: false // optional
   };
 
+  /**
+   * Renders sleep analysis, charts, and personalized tips
+   * Includes pie chart of sleep composition and advice based on averages
+   * @returns {JSX.Element} Sleep analysis UI
+   */
   const renderSleepTips = () => {
     if (!averages) {
       return (
@@ -414,6 +457,10 @@ const ParentWelcomePage = () => {
     );
   };
 
+  /**
+   * Handles date input formatting and validation
+   * @param {string} text - User input text
+   */
   const handleDayChange = (text) => {
     // Remove any non-digit characters
     const numericText = text.replace(/[^0-9]/g, '');
@@ -431,6 +478,11 @@ const ParentWelcomePage = () => {
     }
   };
 
+  /**
+   * Renders modal for viewing and managing sleep data entries
+   * Includes edit and delete functionality for each entry
+   * @returns {JSX.Element} Sleep data management modal
+   */
   const renderSleepDataModal = () => (
     <Modal
       visible={sleepDataModalVisible}
@@ -478,6 +530,14 @@ const ParentWelcomePage = () => {
     </Modal>
   );
 
+  /**
+   * Main render method for ParentWelcomePage
+   * Displays:
+   * - Header with add/edit buttons
+   * - User and timeframe selection
+   * - Sleep analysis and charts
+   * - Data management modals
+   */
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {/* Header Section */}
@@ -691,6 +751,15 @@ const ParentWelcomePage = () => {
   );
 };
 
+/**
+ * Styles for ParentWelcomePage component
+ * Defines styling for:
+ * - Layout containers and spacing
+ * - Buttons and interactive elements
+ * - Charts and data visualization
+ * - Modals and forms
+ * - Typography and colors
+ */
 const styles = StyleSheet.create({
   container: {
     padding: 20,
